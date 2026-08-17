@@ -26,10 +26,8 @@ jobs:
           base64 --decode /tmp/nadmo-source.b64 > /tmp/nadmo-source.zip
           mkdir -p /tmp/nadmo-unpack
           unzip -q /tmp/nadmo-source.zip -d /tmp/nadmo-unpack
-          rsync -a /tmp/nadmo-unpack/nadmo-ai/ ./
+          rsync -a --exclude='.github/' /tmp/nadmo-unpack/nadmo-ai/ ./
           rm -rf .source-parts
-          rm -f .github/workflows/bootstrap-source.yml
-          sed -i '/cache: npm/d' .github/workflows/build-apk.yml
 
       - name: Commit expanded project
         shell: bash
