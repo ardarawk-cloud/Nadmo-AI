@@ -29,3 +29,6 @@ cd android
 Debug APK will be under `android/app/build/outputs/apk/debug/app-debug.apk`.
 
 For release builds, configure Android signing in Gradle/Android Studio.
+
+## GitHub Actions APK
+Every push to `main` can build a debug APK automatically through **Actions → Build Android APK**. The APK is available as the `NADMO-AI-debug-apk` workflow artifact.
