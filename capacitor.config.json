@@ -1,0 +1,6 @@
+{
+  "appId": "com.nadmo.ai",
+  "appName": "NADMO AI",
+  "webDir": "www",
+  "server": { "androidScheme": "https" }
+}

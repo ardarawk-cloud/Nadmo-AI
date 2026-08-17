@@ -1,0 +1,19 @@
+{
+  "name": "nadmo-ai",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "serve": "npx serve www -l 4173",
+    "cap:add:android": "npx cap add android",
+    "cap:sync": "npx cap sync android",
+    "android": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "serve": "^14.2.4"
+  }
+}
