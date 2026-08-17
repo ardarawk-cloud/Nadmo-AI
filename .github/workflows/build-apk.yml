@@ -38,6 +38,15 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Apply NADMO AI premium icon
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p android/app/src/main/res/drawable-nodpi
+          base64 --decode assets/nadmo_icon_256.jpg.b64 > android/app/src/main/res/drawable-nodpi/nadmo_icon.jpg
+          sed -i 's#android:icon="@mipmap/ic_launcher"#android:icon="@drawable/nadmo_icon"#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#android:roundIcon="@mipmap/ic_launcher_round"#android:roundIcon="@drawable/nadmo_icon"#' android/app/src/main/AndroidManifest.xml
+
       - name: Build debug APK
         working-directory: android
         run: |
