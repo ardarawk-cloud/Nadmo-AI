@@ -132,7 +132,7 @@
     settings=async function(){
       let html=await baseSettings();
       const about=`<div class="section-title"><span>Tentang NADMO AI</span></div>
-      <div class="card release-card"><div class="release-row"><div><div class="release-name">NADMO AI</div><div class="privacy-note">Personal finance intelligence dengan data utama tersimpan lokal di perangkat.</div></div><div class="release-version">v1.2.3</div></div></div>`;
+      <div class="card release-card"><div class="release-row"><div><div class="release-name">NADMO AI</div><div class="privacy-note">Personal finance intelligence dengan data utama tersimpan lokal di perangkat.</div></div><div class="release-version">v1.3.0</div></div></div>`;
       const safety=`<div class="section-title"><span>Data Protection</span></div>
       <div class="card safety-card"><div class="safety-row"><div class="safety-icon">${svg(icons.shield)}</div><div><div class="safety-title">Backup sebelum perubahan besar</div><div class="safety-copy">Gunakan Backup Database sebelum pindah perangkat, reset aplikasi, atau perubahan sistem.</div></div></div></div>`;
       html=html.replace('<div class="section-title"><span>Data & Backup</span></div>',about+safety+'<div class="section-title"><span>Data & Backup</span></div>');
@@ -153,6 +153,6 @@
     };
   }
 
-  document.documentElement.dataset.nadmoEdition='premium-v12';
+  document.documentElement.dataset.nadmoEdition='premium-v13';
   setTimeout(()=>{if(typeof render==='function')render()},0);
 })();
