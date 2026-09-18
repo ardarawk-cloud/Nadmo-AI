@@ -83,9 +83,8 @@
     form=async function(type,draft={}){
       let html=await baseForm(type,draft);
       if(type==='income'){
-        const marker='</div><div class="section-title"><span>Dompet Tujuan</span></div>';
-        const shortcut=`<button type="button" class="choice paylater-shortcut" onclick="paylaterLimitEditor()"><span class="paylater-choice-title">${svg(icons.credit)}<b>Paylater</b></span><small>Atur limit / saldo</small></button>`;
-        html=html.replace(marker,shortcut+marker);
+        const shortcut=`<button type="button" class="choice paylater-shortcut" onclick="paylaterLimitEditor()"><span class="paylater-choice-title">${svg(icons.credit)}<b>Paylater</b></span><small>Limit / saldo</small></button>`;
+        html=html.replace(/(<div class="grid" id="catGrid">[\s\S]*?)(<\/div><div class="section-title"><span>Dompet Tujuan<\/span>)/, (match,grid,tail)=>grid+shortcut+tail);
       }
       return html;
     };
