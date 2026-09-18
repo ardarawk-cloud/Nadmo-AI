@@ -1,7 +1,11 @@
-name: Build Permanent Signed APK
+name: Build NADMO AI Release
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
 
 permissions:
   contents: read
@@ -13,20 +17,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Verify signing secrets
-        shell: bash
-        env:
-          KEYSTORE_B64: ${{ secrets.NADMO_RELEASE_KEYSTORE_B64 }}
-          STORE_PASSWORD: ${{ secrets.NADMO_RELEASE_STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.NADMO_RELEASE_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.NADMO_RELEASE_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          test -n "$KEYSTORE_B64" || { echo "Missing NADMO_RELEASE_KEYSTORE_B64"; exit 1; }
-          test -n "$STORE_PASSWORD" || { echo "Missing NADMO_RELEASE_STORE_PASSWORD"; exit 1; }
-          test -n "$KEY_ALIAS" || { echo "Missing NADMO_RELEASE_KEY_ALIAS"; exit 1; }
-          test -n "$KEY_PASSWORD" || { echo "Missing NADMO_RELEASE_KEY_PASSWORD"; exit 1; }
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -65,41 +55,40 @@ jobs:
           sed -i 's/versionCode 1/versionCode 11/' android/app/build.gradle
           sed -i 's/versionName "1.0"/versionName "1.1.0"/' android/app/build.gradle
 
-      - name: Restore permanent signing keystore
-        shell: bash
-        env:
-          KEYSTORE_B64: ${{ secrets.NADMO_RELEASE_KEYSTORE_B64 }}
-        run: |
-          set -euo pipefail
-          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/nadmo-release.jks"
-          chmod 600 "$GITHUB_WORKSPACE/nadmo-release.jks"
-
-      - name: Build permanently signed release APK
+      - name: Build release APK
         working-directory: android
-        env:
-          STORE_PASSWORD: ${{ secrets.NADMO_RELEASE_STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.NADMO_RELEASE_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.NADMO_RELEASE_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           chmod +x gradlew
-          ./gradlew --no-daemon assembleRelease             -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/nadmo-release.jks"             -Pandroid.injected.signing.store.password="$STORE_PASSWORD"             -Pandroid.injected.signing.key.alias="$KEY_ALIAS"             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+          ./gradlew --no-daemon assembleRelease
 
-      - name: Verify signature and checksum
+      - name: Collect Android signing tools
         shell: bash
         run: |
           set -euo pipefail
-          APK="android/app/build/outputs/apk/release/app-release.apk"
-          test -f "$APK"
-          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --verbose --print-certs "$APK"
-          sha256sum "$APK" > NADMO-AI-v1.1.0-release.sha256
+          BUILD_TOOLS="$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          SRC="$ANDROID_HOME/build-tools/$BUILD_TOOLS"
+          mkdir -p signing-tools/lib
+          cp "$SRC/apksigner" signing-tools/apksigner
+          cp "$SRC/zipalign" signing-tools/zipalign
+          cp "$SRC/lib/apksigner.jar" signing-tools/lib/apksigner.jar
+          chmod +x signing-tools/apksigner signing-tools/zipalign
 
-      - name: Upload permanent APK
+      - name: Check release output
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          test -f "$APK"
+          sha256sum "$APK" > NADMO-AI-v1.1.0-unsigned.sha256
+
+      - name: Upload unsigned release and signing tools
         uses: actions/upload-artifact@v7
         with:
-          name: NADMO-AI-v1.1.0-permanent
+          name: NADMO-AI-v1.1.0-release-unsigned
           path: |
-            android/app/build/outputs/apk/release/app-release.apk
-            NADMO-AI-v1.1.0-release.sha256
+            android/app/build/outputs/apk/release/app-release-unsigned.apk
+            NADMO-AI-v1.1.0-unsigned.sha256
+            signing-tools/
           if-no-files-found: error
-          retention-days: 90
+          retention-days: 30
