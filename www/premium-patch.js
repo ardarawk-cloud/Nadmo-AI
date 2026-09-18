@@ -10,7 +10,8 @@
     swap:'M7 7h12m0 0-3-3m3 3-3 3M17 17H5m0 0 3 3m-3-3 3-3',
     history:'M3 12a9 9 0 1 0 3-6.7L3 8m0 0V3m0 5h5M12 7v5l3 2',
     search:'M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Zm5-2 4 4',
-    shield:'M12 3 5 6v5c0 4.8 3 8.2 7 10 4-1.8 7-5.2 7-10V6l-7-3Zm-3 9 2 2 4-5'
+    shield:'M12 3 5 6v5c0 4.8 3 8.2 7 10 4-1.8 7-5.2 7-10V6l-7-3Zm-3 9 2 2 4-5',
+    credit:'M3 7h18v10H3zM3 10h18M7 14h3'
   };
 
   topbar=function(){
@@ -37,6 +38,58 @@
     const when=dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short'})+' · '+dt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
     return `<div class="tx" onclick="editTx('${t.id}')"><div class="tx-ico">${iconFor(t.type)}</div><div><div class="tx-title">${esc(t.description||t.categoryName||'Transaksi')}</div><div class="tx-sub">${esc(t.categoryName||'')} · ${esc(t.walletName||'')} · ${when}</div></div><div class="tx-amount ${t.type==='income'?'income':'expense'}">${t.type==='income'?'+ ':'- '}${rupiah(t.amount)}</div></div>`;
   };
+
+
+  window.paylaterLimitEditor=async function(){
+    const wallets=(await all('wallets')).filter(w=>w.type==='Kredit/Paylater');
+    if(!wallets.length) return toast('Belum ada wallet Paylater.');
+    const rows=[];
+    for(const w of wallets) rows.push({...w,current:await walletBalance(w)});
+    modal(`<h2>Limit / Saldo Paylater</h2>
+      <div class="paylater-help">Pilih layanan Paylater lalu isi <b>saldo/limit yang tersedia sekarang</b>. Penyesuaian ini tidak dicatat sebagai pemasukan.</div>
+      <div class="paylater-list">${rows.map(w=>`<button class="paylater-row" onclick="paylaterLimitInput('${w.id}')"><span><b>${esc(w.name)}</b><small>Limit / saldo tersedia</small></span><strong>${rupiah(w.current)}</strong></button>`).join('')}</div>`);
+  };
+
+  window.paylaterLimitInput=async function(id){
+    const w=await get('wallets',id);
+    if(!w) return toast('Wallet Paylater tidak ditemukan.');
+    const current=await walletBalance(w);
+    closeModal();
+    modal(`<h2>${esc(w.name)}</h2>
+      <div class="paylater-current"><span>Saldo / limit tersedia saat ini</span><strong>${rupiah(current)}</strong></div>
+      <div class="field"><div class="label">Limit / saldo tersedia terbaru</div><input id="paylaterLimit" class="input amount-input" inputmode="numeric" value="${Math.round(current).toLocaleString('id-ID')}" oninput="fmtAmount(this)"></div>
+      <div class="paylater-help">Masukkan angka yang tampil sebagai limit tersedia di aplikasi Paylater. NADMO akan menyesuaikan saldo tanpa membuat transaksi pemasukan palsu.</div>
+      <button class="primary" onclick="savePaylaterLimit('${id}')">SIMPAN LIMIT TERSEDIA</button>`);
+  };
+
+  window.savePaylaterLimit=async function(id){
+    const el=document.querySelector('#paylaterLimit');
+    const raw=(el?.dataset.raw||el?.value||'').replace(/\D/g,'');
+    if(raw==='') return toast('Masukkan limit / saldo tersedia.');
+    const target=Number(raw);
+    const w=await get('wallets',id);
+    if(!w) return toast('Wallet Paylater tidak ditemukan.');
+    const current=await walletBalance(w);
+    w.initialBalance=(Number(w.initialBalance)||0)+(target-current);
+    w.updatedAt=now();
+    await put('wallets',w);
+    closeModal();
+    toast('Limit Paylater diperbarui.');
+    go('income');
+  };
+
+  if(typeof form==='function'){
+    const baseForm=form;
+    form=async function(type,draft={}){
+      let html=await baseForm(type,draft);
+      if(type==='income'){
+        const marker='</div><div class="section-title"><span>Dompet Tujuan</span></div>';
+        const shortcut=`<button type="button" class="choice paylater-shortcut" onclick="paylaterLimitEditor()"><span class="paylater-choice-title">${svg(icons.credit)}<b>Paylater</b></span><small>Atur limit / saldo</small></button>`;
+        html=html.replace(marker,shortcut+marker);
+      }
+      return html;
+    };
+  }
 
   if(typeof home==='function'){
     const baseHome=home;
