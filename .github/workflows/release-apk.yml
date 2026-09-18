@@ -1,0 +1,105 @@
+name: Build Permanent Signed APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Verify signing secrets
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.NADMO_RELEASE_KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.NADMO_RELEASE_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.NADMO_RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.NADMO_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_B64" || { echo "Missing NADMO_RELEASE_KEYSTORE_B64"; exit 1; }
+          test -n "$STORE_PASSWORD" || { echo "Missing NADMO_RELEASE_STORE_PASSWORD"; exit 1; }
+          test -n "$KEY_ALIAS" || { echo "Missing NADMO_RELEASE_KEY_ALIAS"; exit 1; }
+          test -n "$KEY_PASSWORD" || { echo "Missing NADMO_RELEASE_KEY_PASSWORD"; exit 1; }
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate JavaScript
+        run: npm run check
+
+      - name: Create Android project
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Apply release identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p android/app/src/main/res/drawable-nodpi
+          base64 --decode assets/nadmo_icon_256.jpg.b64 > android/app/src/main/res/drawable-nodpi/nadmo_icon.jpg
+          sed -i 's#android:icon="@mipmap/ic_launcher"#android:icon="@drawable/nadmo_icon"#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#android:roundIcon="@mipmap/ic_launcher_round"#android:roundIcon="@drawable/nadmo_icon"#' android/app/src/main/AndroidManifest.xml
+          sed -i 's/versionCode 1/versionCode 11/' android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "1.1.0"/' android/app/build.gradle
+
+      - name: Restore permanent signing keystore
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.NADMO_RELEASE_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/nadmo-release.jks"
+          chmod 600 "$GITHUB_WORKSPACE/nadmo-release.jks"
+
+      - name: Build permanently signed release APK
+        working-directory: android
+        env:
+          STORE_PASSWORD: ${{ secrets.NADMO_RELEASE_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.NADMO_RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.NADMO_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease             -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/nadmo-release.jks"             -Pandroid.injected.signing.store.password="$STORE_PASSWORD"             -Pandroid.injected.signing.key.alias="$KEY_ALIAS"             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+
+      - name: Verify signature and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -f "$APK"
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --verbose --print-certs "$APK"
+          sha256sum "$APK" > NADMO-AI-v1.1.0-release.sha256
+
+      - name: Upload permanent APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: NADMO-AI-v1.1.0-permanent
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            NADMO-AI-v1.1.0-release.sha256
+          if-no-files-found: error
+          retention-days: 90
