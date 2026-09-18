@@ -7,12 +7,15 @@
     wallet:'M4 7.5h14a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h11v3.5M16 13h4',
     up:'M7 17 17 7m0 0h-7m7 0v7',
     down:'M17 7 7 17m0 0h7m-7 0v-7',
-    swap:'M7 7h12m0 0-3-3m3 3-3 3M17 17H5m0 0 3 3m-3-3 3-3'
+    swap:'M7 7h12m0 0-3-3m3 3-3 3M17 17H5m0 0 3 3m-3-3 3-3',
+    history:'M3 12a9 9 0 1 0 3-6.7L3 8m0 0V3m0 5h5M12 7v5l3 2',
+    search:'M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Zm5-2 4 4',
+    shield:'M12 3 5 6v5c0 4.8 3 8.2 7 10 4-1.8 7-5.2 7-10V6l-7-3Zm-3 9 2 2 4-5'
   };
 
   topbar=function(){
     const logo=(typeof NADMO_LOGO!=='undefined'&&NADMO_LOGO)?`<div class="nadmo-logo-wrap"><img class="nadmo-logo" src="${NADMO_LOGO}" alt="NADMO AI"></div>`:'';
-    return `<div class="topbar"><div class="nadmo-brand">${logo}<div class="brand-copy"><div class="brand-title">NADMO AI <span class="pro-badge">PRO</span></div><div class="brand-sub">Private Finance Intelligence</div></div></div><button class="iconbtn" aria-label="Pengaturan" onclick="go('settings')">${svg(icons.settings)}</button></div>`;
+    return `<div class="topbar"><div class="nadmo-brand">${logo}<div class="brand-copy"><div class="brand-title">NADMO AI <span class="pro-badge">PRIVATE</span></div><div class="brand-sub">Personal Finance Intelligence</div></div></div><button class="iconbtn" aria-label="Pengaturan" onclick="go('settings')">${svg(icons.settings)}</button></div>`;
   };
 
   bottom=function(){
@@ -29,13 +32,45 @@
     return svg(icons.swap);
   };
 
+  txHtml=function(t){
+    const dt=new Date(t.timestamp);
+    const when=dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short'})+' · '+dt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="tx" onclick="editTx('${t.id}')"><div class="tx-ico">${iconFor(t.type)}</div><div><div class="tx-title">${esc(t.description||t.categoryName||'Transaksi')}</div><div class="tx-sub">${esc(t.categoryName||'')} · ${esc(t.walletName||'')} · ${when}</div></div><div class="tx-amount ${t.type==='income'?'income':'expense'}">${t.type==='income'?'+ ':'- '}${rupiah(t.amount)}</div></div>`;
+  };
+
   if(typeof home==='function'){
     const baseHome=home;
     home=async function(){
       let html=await baseHome();
-      html=html.replace('<div style="margin:4px 2px 14px"><div class="muted small">Selamat Datang di</div><div style="font-size:25px;font-weight:900">NADMO AI</div></div>','<div class="home-intro"><div class="home-kicker">Financial overview</div><div class="home-title">Ringkasan Keuangan</div></div>');
-      html=html.replace('<div class="section-title"><span>NADMO AI</span><span class="muted small">Natural input</span></div>','<div class="section-title"><span>Smart Entry</span><span class="muted small">Tulis seperti biasa</span></div>');
+      html=html.replace('<div style="margin:4px 2px 14px"><div class="muted small">Selamat Datang di</div><div style="font-size:25px;font-weight:900">NADMO AI</div></div>','<div class="home-intro"><div class="home-kicker">Financial control center</div><div class="home-title">Ringkasan Keuangan</div></div>');
+      html=html.replace('<div class="eyebrow">Total saldo aktual</div>','<div class="eyebrow">Total saldo aktual <span class="hero-status">TERKINI</span></div>');
+      html=html.replace('<div class="fabrow"><button class="ghost" onclick="go(\'history\')">🧾 Riwayat</button><button class="ghost" onclick="go(\'transfer\')">⇄ Pindah Saldo</button></div>',`<div class="fabrow"><button class="ghost" onclick="go('history')">${svg(icons.history)}<span>Riwayat</span></button><button class="ghost" onclick="go('transfer')">${svg(icons.swap)}<span>Pindah Saldo</span></button></div>`);
+      html=html.replace('<div class="section-title"><span>NADMO AI</span><span class="muted small">Natural input</span></div>','<div class="section-title"><span>Smart Entry</span><span class="muted small">Local intelligence</span></div>');
       html=html.replace('Buat Draft Transaksi','Analisis Transaksi');
+      html=html.replace('<div class="section-title"><span>Ringkasan Bulanan</span></div>','<div class="section-title"><span>Arus Kas Bulan Ini</span><span class="muted small">Income vs expense</span></div>');
+      html=html.replace('<div class="section-title"><span>Kategori Pengeluaran Terbesar</span></div>','<div class="section-title"><span>Pengeluaran Terbesar</span><span class="muted small">By category</span></div>');
+      html=html.replace('<div class="section-title"><span>Transaksi terbaru</span>','<div class="section-title"><span>Aktivitas Terbaru</span>');
+      return html;
+    };
+  }
+
+  if(typeof balance==='function'){
+    const baseBalance=balance;
+    balance=async function(){
+      let html=await baseBalance();
+      html=html.replace('<h1>Cek Saldo</h1>','<h1>Saldo & Wallet</h1>');
+      html=html.replace('<div class="eyebrow">TOTAL SALDO</div>','<div class="eyebrow">TOTAL ASET TERLACAK <span class="hero-status">LIVE</span></div>');
+      return html;
+    };
+  }
+
+  if(typeof history==='function'){
+    const baseHistory=history;
+    history=async function(){
+      let html=await baseHistory();
+      html=html.replace('<h1>Riwayat</h1>','<h1>Riwayat Transaksi</h1>');
+      html=html.replace('<button class="iconbtn" onclick="go(\'history\')">⌕</button>',`<button class="iconbtn" aria-label="Cari" onclick="go('history')">${svg(icons.search)}</button>`);
+      html=html.replace('Custom Date','Tanggal');
       return html;
     };
   }
@@ -45,12 +80,27 @@
     settings=async function(){
       let html=await baseSettings();
       const about=`<div class="section-title"><span>Tentang NADMO AI</span></div>
-      <div class="card release-card"><div class="release-row"><div><div class="release-name">NADMO AI</div><div class="privacy-note">Personal finance intelligence yang menyimpan data utama secara lokal di perangkat.</div></div><div class="release-version">v1.1 PRO</div></div></div>`;
-      html=html.replace('<div class="section-title"><span>Data & Backup</span></div>',about+'<div class="section-title"><span>Data & Backup</span></div>');
+      <div class="card release-card"><div class="release-row"><div><div class="release-name">NADMO AI</div><div class="privacy-note">Personal finance intelligence dengan data utama tersimpan lokal di perangkat.</div></div><div class="release-version">v1.2</div></div></div>`;
+      const safety=`<div class="section-title"><span>Data Protection</span></div>
+      <div class="card safety-card"><div class="safety-row"><div class="safety-icon">${svg(icons.shield)}</div><div><div class="safety-title">Backup sebelum perubahan besar</div><div class="safety-copy">Gunakan Backup Database sebelum pindah perangkat, reset aplikasi, atau perubahan sistem.</div></div></div></div>`;
+      html=html.replace('<div class="section-title"><span>Data & Backup</span></div>',about+safety+'<div class="section-title"><span>Data & Backup</span></div>');
       return html;
     };
   }
 
-  document.documentElement.dataset.nadmoEdition='pro';
+  if(typeof render==='function'){
+    const baseRender=render;
+    render=async function(...args){
+      await baseRender(...args);
+      const app=document.querySelector('.app');
+      if(app){
+        app.dataset.view=(typeof state!=='undefined'&&state.view)||'home';
+        app.classList.remove('view-enter');
+        requestAnimationFrame(()=>app.classList.add('view-enter'));
+      }
+    };
+  }
+
+  document.documentElement.dataset.nadmoEdition='premium-v12';
   setTimeout(()=>{if(typeof render==='function')render()},0);
 })();
