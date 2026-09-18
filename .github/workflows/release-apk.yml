@@ -68,10 +68,11 @@ jobs:
           set -euo pipefail
           BUILD_TOOLS="$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
           SRC="$ANDROID_HOME/build-tools/$BUILD_TOOLS"
-          mkdir -p signing-tools/lib
+          mkdir -p signing-tools/lib signing-tools/lib64
           cp "$SRC/apksigner" signing-tools/apksigner
           cp "$SRC/zipalign" signing-tools/zipalign
           cp "$SRC/lib/apksigner.jar" signing-tools/lib/apksigner.jar
+          cp "$SRC/lib64/libc++.so" signing-tools/lib64/libc++.so
           chmod +x signing-tools/apksigner signing-tools/zipalign
 
       - name: Check release output
