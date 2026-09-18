@@ -1,9 +1,10 @@
 {
   "name": "nadmo-ai",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "serve": "npx serve www -l 4173",
+    "check": "node --check www/app.js && node --check www/ui-patch.js && node --check www/sort-patch.js && node --check www/premium-patch.js",
     "cap:add:android": "npx cap add android",
     "cap:sync": "npx cap sync android",
     "android": "npx cap open android"
