@@ -463,3 +463,35 @@ button:active{transform:scale(.975)}
 }
 .paylater-current span{font-size:10px;color:var(--muted)}
 .paylater-current strong{font-size:13px;color:#e7c98f;white-space:nowrap}
+
+
+/* NADMO AI v1.3 wallet groups + balance privacy */
+.privacy-hero{padding-right:64px}
+.privacy-toggle{
+  position:absolute;z-index:3;top:17px;right:16px;width:40px;height:40px;border-radius:14px;
+  display:grid;place-items:center;border:1px solid rgba(180,198,224,.13);
+  background:rgba(255,255,255,.035);color:#c7d2e2;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)
+}
+.privacy-toggle svg{width:20px;height:20px}
+.privacy-balance{min-height:42px;letter-spacing:-.035em}
+.wallet-groups{display:grid;gap:18px;margin-top:8px}
+.wallet-group-block{min-width:0}
+.wallet-group-label{
+  display:flex;align-items:center;justify-content:space-between;margin:0 3px 8px;
+  font-size:9px;font-weight:850;letter-spacing:.14em;color:#8795aa
+}
+.wallet-group-label span{
+  min-width:24px;height:20px;padding:0 7px;border-radius:999px;display:inline-flex;
+  align-items:center;justify-content:center;border:1px solid rgba(180,198,224,.10);
+  background:rgba(255,255,255,.025);font-size:8px;letter-spacing:0;color:#aab6c8
+}
+.wallet-group-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.wallet-group-grid .choice{width:100%;min-height:82px}
+.wallet-group-grid .choice:last-child:nth-child(odd){grid-column:1/-1}
+.wallet-balance-title .muted{text-transform:none!important;letter-spacing:.01em!important}
+@media(max-width:390px){
+  .privacy-hero{padding-right:58px}
+  .privacy-toggle{top:15px;right:14px;width:38px;height:38px}
+  .wallet-group-grid{gap:8px}
+}
