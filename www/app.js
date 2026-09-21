@@ -1,5 +1,5 @@
 const DB='nadmo_ai_db', VER=1; let db; let state={view:'home',editing:null,filters:{period:'month',q:'',wallet:'',category:'',from:'',to:''}};
-const EXPENSES=['Makan pagi','Makan siang/malam','Belanja bulanan','Listrik','Air','Gas LPG','Internet/WiFi','Paket data','Laundry','Perawatan rumah','Pajak PBB','Iuran kebersihan','Bensin/BBM','Parkir','Tol','Servis kendaraan','Angkutan umum/Ojek','Asuransi kendaraan','Pembayaran SPP','Biaya kursus','Asuransi kesehatan','Obat-obatan','Biaya dokter/Rumah sakit','Vitamin','Alat kesehatan','Membership gym','Perawatan diri','Pakaian','Gadget','Sepatu/Sandal','Aksesoris diri','Nonton bioskop','Nonton konser','Jalan/Makan di luar','Wisata','Game','Hobi','Amplop pernikahan','Ulang tahun','Sumbangan','Sedekah','Tabungan rutin','Dana darurat','Saham','Reksadana','Emas','Deposito','Asuransi jiwa','Properti','Dana pendidikan anak','Denda','Tilang','Biaya admin','Pengeluaran tak terduga','Rokok','Hutang'];
+const EXPENSES=['Langganan digital/VPS','Makan pagi','Makan siang/malam','Belanja bulanan','Listrik','Air','Gas LPG','Internet/WiFi','Paket data','Laundry','Perawatan rumah','Pajak PBB','Iuran kebersihan','Bensin/BBM','Parkir','Tol','Servis kendaraan','Angkutan umum/Ojek','Asuransi kendaraan','Pembayaran SPP','Biaya kursus','Asuransi kesehatan','Obat-obatan','Biaya dokter/Rumah sakit','Vitamin','Alat kesehatan','Membership gym','Perawatan diri','Pakaian','Gadget','Sepatu/Sandal','Aksesoris diri','Nonton bioskop','Nonton konser','Jalan/Makan di luar','Wisata','Game','Hobi','Amplop pernikahan','Ulang tahun','Sumbangan','Sedekah','Tabungan rutin','Dana darurat','Saham','Reksadana','Emas','Deposito','Asuransi jiwa','Properti','Dana pendidikan anak','Denda','Tilang','Biaya admin','Pengeluaran tak terduga','Rokok','Hutang'];
 const INCOMES=['Gaji','Bonus','Pendapatan usaha','Penjualan','Freelance','Komisi','Bunga','Dividen','Cashback','Pengembalian uang','Hadiah','Transfer masuk','Pemasukan lainnya'];
 const WALLETS=[['BCA','Bank'],['BLU PRIBADI','Bank'],['BLU BUSINESS','Bank'],['BLU VALAS','Bank'],['NEO BANK','Bank'],['SEABANK','Bank'],['JAGO','Bank'],['ALLO BANK','Bank'],['SUPERBANK','Bank'],['DANA PREMIUM','E-Wallet'],['GOPAY','E-Wallet'],['OVO','E-Wallet'],['SHOPEEPAY','E-Wallet'],['DOKU','E-Wallet'],['PAYPAL','E-Wallet'],['HONEST','Kredit/Paylater'],['DANA CICIL','Kredit/Paylater'],['DANA+','Kredit/Paylater'],['SHOPEE PAYLATER','Kredit/Paylater'],['SHOPEE PINJAM','Kredit/Paylater'],['TREASURY','Investasi'],['BIBIT','Investasi'],['TOKOCRYPTO','Crypto/Web3'],['INDODAX','Crypto/Web3'],['METAMASK','Crypto/Web3'],['E-MONEY CARD','E-Wallet'],['CASH','Cash']];
 const WALLET_GROUPS=[['Bank','BANK'],['E-Wallet','E-WALLET'],['Kredit/Paylater','PAYLATER / KREDIT'],['Investasi','INVESTASI'],['Crypto/Web3','CRYPTO / WEB3'],['Cash','CASH']];
@@ -37,6 +37,80 @@ async function settings(){let ws=await all('wallets'),cs=await all('categories')
 async function walletEditor(id){let w=id?await get('wallets',id):{name:'',type:'Bank',initialBalance:0};modal(`<h2>${id?'Edit':'Tambah'} Wallet</h2><div class="field"><div class="label">Nama</div><input id="wName" class="input" value="${esc(w.name)}"></div><div class="field"><div class="label">Tipe</div><select id="wType" class="select">${['Bank','E-Wallet','Kredit/Paylater','Investasi','Crypto/Web3','Cash'].map(x=>`<option ${w.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><div class="label">Saldo awal</div><input id="wBal" class="input" inputmode="numeric" value="${w.initialBalance||0}"></div><div class="row"><button class="primary" onclick="saveWallet('${id||''}')">Simpan</button>${id?`<button class="danger" onclick="removeWallet('${id}')">Hapus</button>`:''}</div>`)} async function saveWallet(id){let old=id?await get('wallets',id):null;await put('wallets',{id:id||uid(),name:document.querySelector('#wName').value.trim(),type:document.querySelector('#wType').value,initialBalance:Number(document.querySelector('#wBal').value.replace(/\D/g,''))||0,createdAt:old?.createdAt||now()});closeModal();go('settings')} async function removeWallet(id){let tx=await all('transactions'),tr=await all('transfers');if(tx.some(t=>t.walletId===id)||tr.some(t=>t.fromWalletId===id||t.toWalletId===id))return toast('Wallet masih dipakai transaksi/transfer.');await del('wallets',id);closeModal();go('settings')}
 async function categoryManager(){let cs=await all('categories');modal(`<h2>Kelola Kategori</h2>${cs.map(c=>`<div class="wallet" onclick="categoryEditor('${c.id}')"><div><div class="wallet-name">${esc(c.name)}</div><div class="wallet-type">${c.type==='income'?'Pemasukan':'Pengeluaran'}</div></div><div>›</div></div>`).join('')}`)} async function categoryEditor(id){let c=id?await get('categories',id):{name:'',type:'expense'};modal(`<h2>${id?'Edit':'Tambah'} Kategori</h2><div class="field"><div class="label">Nama</div><input id="cName" class="input" value="${esc(c.name)}"></div><div class="field"><div class="label">Jenis</div><select id="cType" class="select"><option value="expense" ${c.type==='expense'?'selected':''}>Pengeluaran</option><option value="income" ${c.type==='income'?'selected':''}>Pemasukan</option></select></div><div class="row"><button class="primary" onclick="saveCategory('${id||''}')">Simpan</button>${id?`<button class="danger" onclick="removeCategory('${id}')">Hapus</button>`:''}</div>`)} async function saveCategory(id){await put('categories',{id:id||uid(),name:document.querySelector('#cName').value.trim(),type:document.querySelector('#cType').value});closeModal();go('settings')} async function removeCategory(id){let tx=await all('transactions');if(tx.some(t=>t.categoryId===id))return toast('Kategori masih dipakai transaksi.');await del('categories',id);closeModal();go('settings')}
 function parseNumber(text){let s=text.toLowerCase().replace(/,/g,'.');let m=s.match(/(\d+(?:\.\d+)?)\s*(juta|jt|ribu|rb|k)?/g);if(!m)return 0;let best=0;for(let x of m){let z=x.match(/(\d+(?:\.\d+)?)\s*(juta|jt|ribu|rb|k)?/),n=parseFloat(z[1]),u=z[2];if(u==='juta'||u==='jt')n*=1e6;else if(u==='ribu'||u==='rb'||u==='k')n*=1e3;best=Math.max(best,n)}return best}
+function inferCategoryName(type,lower){
+  const rules=type==='expense'?[
+    [/(dokter|klinik|rumah sakit|\brs\b|medical check|berobat)/,'Biaya dokter/Rumah sakit'],
+    [/(laundry|loundry|cuci baju|dry clean)/,'Laundry'],
+    [/(\bvps\b|hosting|server|domain|cloudflare|cloud server|web hosting|digitalocean|linode|vultr)/,'Langganan digital/VPS'],
+    [/(wifi|internet|indihome|biznet|myrepublic)/,'Internet/WiFi'],
+    [/(belanja|groceries|supermarket|minimarket|alfamart|indomaret)/,'Belanja bulanan'],
+    [/(kopi|coffee|cafe|kafe|nongkrong)/,'Jalan/Makan di luar'],
+    [/(sarapan|breakfast)/,'Makan pagi'],
+    [/(makan|lunch|dinner|warung|resto|restaurant)/,'Makan siang/malam'],
+    [/(bensin|bbm|pertalite|pertamax|solar|shell|spbu)/,'Bensin/BBM'],
+    [/(parkir|parking)/,'Parkir'],
+    [/(tol|toll)/,'Tol'],
+    [/(servis|service motor|service mobil|ganti oli|ban motor|ban mobil)/,'Servis kendaraan'],
+    [/(grab|gojek|ojek|taxi|taksi|angkot|bus|transport)/,'Angkutan umum/Ojek'],
+    [/(listrik|pln|token listrik)/,'Listrik'],
+    [/(pdam|tagihan air|bayar air|air minum)/,'Air'],
+    [/(gas|lpg)/,'Gas LPG'],
+    [/(paket data|pulsa|kuota)/,'Paket data'],
+    [/(obat|apotek|pharmacy)/,'Obat-obatan'],
+    [/(vitamin|suplemen)/,'Vitamin'],
+    [/(gym|fitness)/,'Membership gym'],
+    [/(rokok|cigarette)/,'Rokok'],
+    [/(game|steam|playstation|psn|xbox)/,'Game'],
+    [/(bioskop|cinema|movie)/,'Nonton bioskop'],
+    [/(konser|concert)/,'Nonton konser'],
+    [/(wisata|liburan|travel|hotel|villa)/,'Wisata'],
+    [/(sedekah|donasi|zakat)/,'Sedekah'],
+    [/(sumbangan)/,'Sumbangan'],
+    [/(denda|penalty)/,'Denda'],
+    [/(tilang)/,'Tilang'],
+    [/(admin|biaya bank|fee bank)/,'Biaya admin'],
+    [/(hutang|utang)/,'Hutang']
+  ]:[
+    [/(gaji|salary)/,'Gaji'],
+    [/(bonus)/,'Bonus'],
+    [/(freelance|fee job|job dj|wedding dj|gig)/,'Freelance'],
+    [/(komisi|commission)/,'Komisi'],
+    [/(cashback)/,'Cashback'],
+    [/(dividen|dividend)/,'Dividen'],
+    [/(bunga|interest)/,'Bunga'],
+    [/(refund|pengembalian)/,'Pengembalian uang'],
+    [/(hadiah|gift)/,'Hadiah'],
+    [/(penjualan|jualan|terjual|sold)/,'Penjualan'],
+    [/(usaha|bisnis|papa sauce|pendapatan usaha)/,'Pendapatan usaha'],
+    [/(transfer masuk|ditransfer|transfer dari)/,'Transfer masuk']
+  ];
+  for(const [re,name] of rules) if(re.test(lower)) return name;
+  return null;
+}
+async function ensureDefaultCategories(){
+  const existing=await all('categories'),keys=new Set(existing.map(c=>c.type+':'+String(c.name||'').toLowerCase()));
+  for(const n of EXPENSES){const k='expense:'+n.toLowerCase();if(!keys.has(k)){await put('categories',{id:uid(),name:n,type:'expense'});keys.add(k)}}
+  for(const n of INCOMES){const k='income:'+n.toLowerCase();if(!keys.has(k)){await put('categories',{id:uid(),name:n,type:'income'});keys.add(k)}}
+}
+async function repairSmartInputAirMislabels(){
+  const tx=await all('transactions'),cats=await all('categories');
+  const rules=[
+    [/(dokter|klinik|rumah sakit|\brs\b|medical check|berobat)/,'Biaya dokter/Rumah sakit'],
+    [/(laundry|loundry|cuci baju|dry clean)/,'Laundry'],
+    [/(\bvps\b|hosting|server|domain|cloudflare|cloud server|web hosting|digitalocean|linode|vultr)/,'Langganan digital/VPS'],
+    [/(belanja|groceries|supermarket|minimarket|alfamart|indomaret)/,'Belanja bulanan']
+  ];
+  for(const t of tx){
+    if(t.type!=='expense'||t.categoryName!=='Air') continue;
+    const lower=String(t.description||'').toLowerCase();
+    let target=null;
+    for(const [re,name] of rules){if(re.test(lower)){target=name;break}}
+    if(!target) continue;
+    const cat=cats.find(c=>c.type==='expense'&&c.name===target);
+    if(!cat) continue;
+    t.categoryId=cat.id;t.categoryName=cat.name;t.updatedAt=now();await put('transactions',t);
+  }
+}
 async function parseAI(){let text=document.querySelector('#aiText').value.trim();if(!text)return toast('Tulis transaksi dulu.');let lower=text.toLowerCase(),type=/(gaji|bonus|masuk|pendapatan|cashback|dividen|bunga|terima)/.test(lower)?'income':'expense',amount=parseNumber(lower),ws=await all('wallets'),cs=(await all('categories')).filter(c=>c.type===type);let wallet=ws.find(w=>lower.includes(w.name.toLowerCase()))||ws.find(w=>lower.includes(w.name.toLowerCase().split(' ')[0]));let hints=type==='expense'?[['kopi','Jalan/Makan di luar'],['makan','Makan siang/malam'],['bensin','Bensin/BBM'],['rokok','Rokok'],['listrik','Listrik'],['internet','Internet/WiFi'],['game','Game'],['obat','Obat-obatan']]:[['gaji','Gaji'],['bonus','Bonus'],['cashback','Cashback'],['dividen','Dividen'],['freelance','Freelance']];let cname=(hints.find(([k])=>lower.includes(k))||[])[1],cat=cs.find(c=>c.name===cname)||cs[0];if(!amount||!wallet||!cat)return toast('NADMO AI belum yakin. Lengkapi transaksi secara manual.');let desc=text.replace(/\b\d+(?:[.,]\d+)?\s*(juta|jt|ribu|rb|k)?\b/ig,'').replace(new RegExp(wallet.name,'ig'),'').replace(/\b(pakai|ke|dari|menggunakan)\b/ig,'').replace(/\s+/g,' ').trim();let d={type,amount,description:desc||text,categoryId:cat.id,categoryName:cat.name,walletId:wallet.id,walletName:wallet.name};modal(`<h2>Preview NADMO AI</h2><div class="muted small" style="margin-bottom:10px">Belum disimpan. Periksa dulu hasil pembacaan.</div>${summary(d)}<button class="primary" onclick='saveTx(${JSON.stringify(JSON.stringify(d))})'>KONFIRMASI & SIMPAN</button>`)}
 async function exportJSON(backup){let data={version:1,exportedAt:now(),wallets:await all('wallets'),categories:await all('categories'),transactions:await all('transactions'),transfers:await all('transfers'),settings:await all('settings')};download(JSON.stringify(data,null,2),backup?'nadmo-ai-backup.json':'nadmo-ai-data.json','application/json')} async function exportCSV(){let tx=await all('transactions');let rows=[['id','timestamp','type','amount','description','category','wallet'],...tx.map(t=>[t.id,t.timestamp,t.type,t.amount,t.description,t.categoryName,t.walletName])];let csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');download(csv,'nadmo-ai-transactions.csv','text/csv')} function download(content,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 document.querySelector('#restoreFile').addEventListener('change',async e=>{let file=e.target.files[0];if(!file)return;try{let data=JSON.parse(await file.text());for(const s of ['wallets','categories','transactions','transfers','settings']){let store=req(s,'readwrite');store.clear();for(const x of data[s]||[])store.put(x)}toast('Backup berhasil direstore.');go('home')}catch(err){toast('Backup tidak valid.')}})
