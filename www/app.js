@@ -19,7 +19,7 @@ function topbar(){return `<div class="topbar"><div><div class="brand">NADMO <b>A
 function bottom(){return `<nav class="bottom"><button class="bottom-btn exp" onclick="go('expense')">📉<br>PENGELUARAN</button><button class="bottom-btn inc" onclick="go('income')">📈<br>PEMASUKAN</button><button class="bottom-btn sal" onclick="go('balance')">💰<br>CEK SALDO</button></nav>`}
 async function walletBalance(w){let tx=await all('transactions'), tr=await all('transfers');let b=Number(w.initialBalance)||0;for(const t of tx)if(t.walletId===w.id)b+=t.type==='income'?t.amount:-t.amount;for(const x of tr){if(x.fromWalletId===w.id)b-=x.amount;if(x.toWalletId===w.id)b+=x.amount}return b}
 async function totals(){let tx=await all('transactions'), wallets=await all('wallets');let day=new Date().toISOString().slice(0,10), d=new Date(), month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;let obj={incomeToday:0,expenseToday:0,incomeMonth:0,expenseMonth:0,balance:0};for(const t of tx){let dt=t.timestamp.slice(0,10);if(dt===day)obj[t.type==='income'?'incomeToday':'expenseToday']+=t.amount;if(dt.slice(0,7)===month)obj[t.type==='income'?'incomeMonth':'expenseMonth']+=t.amount}for(const w of wallets){if(w.type!=='Kredit/Paylater')obj.balance+=await walletBalance(w)}return obj}
-async function home(){let t=await totals(), allTx=await all('transactions'), tx=[...allTx].sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).slice(0,6), d=new Date(), month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, catMap={};for(const x of allTx.filter(x=>x.type==='expense'&&x.timestamp.slice(0,7)===month))catMap[x.categoryName]=(catMap[x.categoryName]||0)+x.amount;let topCats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,5),catMax=Math.max(...topCats.map(x=>x[1]),1);return `<div class="app">${topbar()}<div style="margin:4px 2px 14px"><div class="muted small">Selamat Datang di</div><div style="font-size:25px;font-weight:900">NADMO AI</div></div><div class="hero privacy-hero"><div class="eyebrow">Total saldo aktual</div>${privacyToggle()}<div class="balance privacy-balance">${privateRupiah(t.balance)}</div><div class="metric-grid"><div class="metric"><div class="muted small">Pengeluaran hari ini</div><div class="v expense">${rupiah(t.expenseToday)}</div></div><div class="metric"><div class="muted small">Pemasukan hari ini</div><div class="v income">${rupiah(t.incomeToday)}</div></div><div class="metric"><div class="muted small">Selisih hari ini</div><div class="v">${rupiah(t.incomeToday-t.expenseToday)}</div></div><div class="metric"><div class="muted small">Bulan ini</div><div class="v">${rupiah(t.incomeMonth-t.expenseMonth)}</div></div></div></div><div class="fabrow"><button class="ghost" onclick="go('history')">🧾 Riwayat</button><button class="ghost" onclick="go('transfer')">⇄ Pindah Saldo</button></div><div class="section-title"><span>NADMO AI</span><span class="muted small">Natural input</span></div><div class="ai-box"><textarea id="aiText" class="input ai-input" placeholder="Contoh: Beli kopi 25 ribu pakai BCA"></textarea><button class="primary" style="margin-top:10px" onclick="parseAI()">Buat Draft Transaksi</button></div><div class="section-title"><span>Ringkasan Bulanan</span></div><div class="card"><div class="bars"><div class="barcol"><div class="bar in" style="height:${Math.max(3,t.incomeMonth/Math.max(t.incomeMonth,t.expenseMonth,1)*100)}%"></div></div><div class="barcol"><div class="bar out" style="height:${Math.max(3,t.expenseMonth/Math.max(t.incomeMonth,t.expenseMonth,1)*100)}%"></div></div></div><div class="legend"><span><i class="dot" style="background:#2caa7d"></i>Pemasukan ${rupiah(t.incomeMonth)}</span><span><i class="dot" style="background:#d94c65"></i>Pengeluaran ${rupiah(t.expenseMonth)}</span></div></div><div class="section-title"><span>Kategori Pengeluaran Terbesar</span></div><div class="card">${topCats.length?topCats.map(([n,v])=>`<div style="margin:12px 0"><div class="summary-row"><span>${esc(n)}</span><b>${rupiah(v)}</b></div><div style="height:7px;background:#172235;border-radius:8px;overflow:hidden"><div style="height:100%;width:${v/catMax*100}%;background:#4b8cff;border-radius:8px"></div></div></div>`).join(''):'<div class="empty">Belum ada pengeluaran bulan ini.</div>'}</div><div class="section-title"><span>Transaksi terbaru</span><button class="chip" onclick="go('history')">Lihat semua</button></div><div class="card">${tx.length?tx.map(txHtml).join(''):'<div class="empty">Belum ada transaksi.</div>'}</div>${bottom()}</div>`}
+async function home(){let t=await totals(), allTx=await all('transactions'), tx=[...allTx].sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).slice(0,6), d=new Date(), month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, catMap={};for(const x of allTx.filter(x=>x.type==='expense'&&x.timestamp.slice(0,7)===month))catMap[x.categoryName]=(catMap[x.categoryName]||0)+x.amount;let topCats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,5),catMax=Math.max(...topCats.map(x=>x[1]),1);return `<div class="app">${topbar()}<div style="margin:4px 2px 14px"><div class="muted small">Selamat Datang di</div><div style="font-size:25px;font-weight:900">NADMO AI</div></div><div class="hero privacy-hero"><div class="eyebrow">Total saldo aktual</div>${privacyToggle()}<div class="balance privacy-balance">${privateRupiah(t.balance)}</div><div class="metric-grid"><div class="metric"><div class="muted small">Pengeluaran hari ini</div><div class="v expense">${rupiah(t.expenseToday)}</div></div><div class="metric"><div class="muted small">Pemasukan hari ini</div><div class="v income">${rupiah(t.incomeToday)}</div></div><div class="metric"><div class="muted small">Selisih hari ini</div><div class="v">${rupiah(t.incomeToday-t.expenseToday)}</div></div><div class="metric"><div class="muted small">Bulan ini</div><div class="v">${rupiah(t.incomeMonth-t.expenseMonth)}</div></div></div></div><div class="fabrow"><button class="ghost" onclick="go('history')">🧾 Riwayat</button><button class="ghost" onclick="go('transfer')">⇄ Pindah Saldo</button></div><div class="section-title"><span>NADMO AI</span><span class="muted small">Natural input</span></div><div class="ai-box smart-ai-box" ondragover="event.preventDefault()" ondrop="handleSmartImageDrop(event)"><textarea id="aiText" class="input ai-input" placeholder="Contoh: Beli kopi 25 ribu pakai BCA"></textarea><div class="smart-actions"><button class="primary" onclick="parseAI()">Buat Draft Transaksi</button><button class="ghost smart-image-btn" onclick="document.querySelector(\'#smartImageInput\').click()">Baca Screenshot</button></div><input id="smartImageInput" type="file" accept="image/*" hidden onchange="smartImagePicked(this)"><div class="smart-image-note">Pilih / drop screenshot transaksi. OCR berjalan di perangkat.</div></div><div class="section-title"><span>Ringkasan Bulanan</span></div><div class="card"><div class="bars"><div class="barcol"><div class="bar in" style="height:${Math.max(3,t.incomeMonth/Math.max(t.incomeMonth,t.expenseMonth,1)*100)}%"></div></div><div class="barcol"><div class="bar out" style="height:${Math.max(3,t.expenseMonth/Math.max(t.incomeMonth,t.expenseMonth,1)*100)}%"></div></div></div><div class="legend"><span><i class="dot" style="background:#2caa7d"></i>Pemasukan ${rupiah(t.incomeMonth)}</span><span><i class="dot" style="background:#d94c65"></i>Pengeluaran ${rupiah(t.expenseMonth)}</span></div></div><div class="section-title"><span>Kategori Pengeluaran Terbesar</span></div><div class="card">${topCats.length?topCats.map(([n,v])=>`<div style="margin:12px 0"><div class="summary-row"><span>${esc(n)}</span><b>${rupiah(v)}</b></div><div style="height:7px;background:#172235;border-radius:8px;overflow:hidden"><div style="height:100%;width:${v/catMax*100}%;background:#4b8cff;border-radius:8px"></div></div></div>`).join(''):'<div class="empty">Belum ada pengeluaran bulan ini.</div>'}</div><div class="section-title"><span>Transaksi terbaru</span><button class="chip" onclick="go('history')">Lihat semua</button></div><div class="card">${tx.length?tx.map(txHtml).join(''):'<div class="empty">Belum ada transaksi.</div>'}</div>${bottom()}</div>`}
 function txHtml(t){return `<div class="tx" onclick="editTx('${t.id}')"><div class="tx-ico">${iconFor(t.type)}</div><div><div class="tx-title">${esc(t.description||t.categoryName||'Transaksi')}</div><div class="tx-sub">${esc(t.categoryName||'')} · ${esc(t.walletName||'')} · ${new Date(t.timestamp).toLocaleString('id-ID')}</div></div><div class="tx-amount ${t.type==='income'?'income':'expense'}">${t.type==='income'?'+ ':'- '}${rupiah(t.amount)}</div></div>`}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 async function form(type,draft={}){let cats=(await all('categories')).filter(c=>c.type===type),wallets=await all('wallets');let e=state.editing?await get('transactions',state.editing):null,d={...e,...draft};return `<div class="app"><div class="pagehead"><button class="back" onclick="go('home')">‹</button><h1>${type==='expense'?'Pengeluaran':'Pemasukan'}</h1></div><div class="card"><div class="field"><div class="label">Nominal</div><input id="amount" class="input amount-input" inputmode="numeric" placeholder="Rp 0" value="${d.amount||''}" oninput="fmtAmount(this)"></div><div class="field"><div class="label">Deskripsi</div><input id="desc" class="input" placeholder="Contoh: Beli kopi" value="${esc(d.description||'')}"></div><div class="label">Kategori</div><div class="grid" id="catGrid">${cats.map(c=>`<button class="choice ${d.categoryId===c.id?'selected':''}" data-id="${c.id}" onclick="selectChoice(this,'catGrid')">${esc(c.name)}</button>`).join('')}</div><div class="section-title"><span>${type==='expense'?'Pilih Sumber Dana':'Dompet Tujuan'}</span></div><div id="walletGrid" class="wallet-groups">${walletGroupsMarkup(wallets,d.walletId||'')}</div><button class="primary" style="margin-top:18px" onclick="previewTx('${type}')">Lanjut ke Konfirmasi</button></div>${bottom()}</div>`}
@@ -125,6 +125,140 @@ async function parseAI(){
   let desc=text.replace(/\b\d+(?:[.,]\d+)?\s*(juta|jt|ribu|rb|k)?\b/ig,'').replace(new RegExp(wallet.name,'ig'),'').replace(/\b(pakai|ke|dari|menggunakan|masuk)\b/ig,'').replace(/\s+/g,' ').trim();
   let d={type,amount,description:desc||text,categoryId:cat.id,categoryName:cat.name,walletId:wallet.id,walletName:wallet.name};
   modal(`<h2>Preview NADMO AI</h2><div class="muted small" style="margin-bottom:10px">Belum disimpan. Periksa dulu hasil pembacaan.</div>${summary(d)}<button class="primary" onclick='saveTx(${JSON.stringify(JSON.stringify(d))})'>KONFIRMASI & SIMPAN</button>`)
+}
+
+function prepareOCRImage(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('Gagal membaca gambar.'));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error('Format gambar tidak didukung.'));
+      img.onload=()=>{
+        const max=2200,scale=Math.min(1,max/Math.max(img.width,img.height));
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.round(img.width*scale));
+        canvas.height=Math.max(1,Math.round(img.height*scale));
+        const ctx=canvas.getContext('2d',{alpha:false});
+        ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.92));
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function detectOCRType(text){
+  const l=String(text||'').toLowerCase();
+  if(/(uang masuk|transfer masuk|received|diterima|pemasukan|incoming|refund|cashback|gaji|salary|credit\b|kredit masuk)/.test(l))return'income';
+  if(/(pembayaran|payment|bayar|transfer ke|kirim|purchase|merchant|debit\b|debet|uang keluar|pengeluaran|withdraw)/.test(l))return'expense';
+  return null;
+}
+function extractOCRAmount(text){
+  const lines=String(text||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  const found=[];
+  lines.forEach((line,index)=>{
+    const matches=[...line.matchAll(/(?:rp\.?\s*)?(\d{1,3}(?:[.\s]\d{3})+|\d{4,})/gi)];
+    for(const m of matches){
+      const value=Number(String(m[1]).replace(/\D/g,''));
+      if(!Number.isFinite(value)||value<1000)continue;
+      let score=/rp/i.test(m[0])?4:0;
+      if(/(nominal|jumlah|total|amount|transaksi|bayar|pembayaran|payment|debit|debet|kredit|credit)/i.test(line))score+=5;
+      if(/(saldo|balance|limit|tersedia|sisa|remaining)/i.test(line))score-=7;
+      found.push({value,score,index,line});
+    }
+  });
+  if(!found.length)return 0;
+  found.sort((a,b)=>b.score-a.score||a.index-b.index);
+  return found[0].value;
+}
+function detectOCRWallet(text,wallets){
+  const l=String(text||'').toLowerCase();
+  const rules=[
+    [/mybca|bca mobile|klikbca/,'BCA',12],
+    [/blu\s*(business|bisnis)/,'BLU BUSINESS',14],
+    [/blu\s*valas|bluvalas/,'BLU VALAS',14],
+    [/bluaccount|blu newbie|blu by bca digital/,'BLU PRIBADI',11],
+    [/gopay/,'GOPAY',12],
+    [/dana\s*cicil/,'DANA CICIL',14],
+    [/dana\s*\+/,'DANA+',14],
+    [/\bdana\b/,'DANA PREMIUM',10],
+    [/shopee\s*paylater|spaylater/,'SHOPEE PAYLATER',14],
+    [/shopee\s*pinjam|spinjam/,'SHOPEE PINJAM',14],
+    [/shopee\s*pay|shopeepay|spay\b/,'SHOPEEPAY',12],
+    [/\bovo\b/,'OVO',12],
+    [/\bhonest\b/,'HONEST',12],
+    [/\bdoku\b/,'DOKU',12],
+    [/neo\s*bank|neobank|bank neo commerce/,'NEO BANK',12],
+    [/seabank|sea bank/,'SEABANK',12],
+    [/bank jago|\bjago\b/,'JAGO',12],
+    [/allo\s*bank/,'ALLO BANK',12],
+    [/superbank/,'SUPERBANK',12],
+    [/paypal/,'PAYPAL',12],
+    [/treasury/,'TREASURY',12],
+    [/tokocrypto/,'TOKOCRYPTO',12],
+    [/indodax/,'INDODAX',12],
+    [/\bbibit\b/,'BIBIT',12],
+    [/metamask/,'METAMASK',12],
+    [/e[-\s]?money|flazz/,'E-MONEY CARD',10]
+  ];
+  const hits=[];
+  for(const [re,name,score] of rules)if(re.test(l)){const w=wallets.find(x=>String(x.name||'').toUpperCase()===name);if(w)hits.push({wallet:w,score})}
+  if(/\bblu\b/.test(l)&&!hits.some(x=>x.wallet.name.startsWith('BLU '))){
+    for(const name of ['BLU PRIBADI','BLU BUSINESS','BLU VALAS']){const w=wallets.find(x=>x.name===name);if(w)hits.push({wallet:w,score:6})}
+  }
+  hits.sort((a,b)=>b.score-a.score);
+  if(!hits.length)return{wallet:null,ambiguous:false,candidates:[]};
+  const top=hits[0].score,topHits=hits.filter(x=>x.score===top);
+  return{wallet:topHits.length===1?topHits[0].wallet:null,ambiguous:topHits.length>1,candidates:topHits.map(x=>x.wallet)};
+}
+function OCRDescription(text){
+  const lines=String(text||'').split(/\n+/).map(x=>x.trim()).filter(x=>x.length>=3&&x.length<=70);
+  const labels=/(detail transaksi|transaksi berhasil|berhasil|success|tanggal|waktu|nominal|jumlah|total|saldo|balance|reference|referensi|id transaksi|receipt|struk|home|beranda|riwayat)/i;
+  const brands=/(mybca|bca mobile|blu|gopay|dana|shopee|ovo|honest|doku|neobank|seabank|jago|allo bank|superbank|paypal|treasury|tokocrypto|indodax|bibit|metamask)/i;
+  const withLabel=lines.find(x=>/(merchant|penerima|tujuan|keterangan|catatan|description|deskripsi)\s*[:\-]/i.test(x));
+  if(withLabel)return withLabel.replace(/^.*?[:\-]\s*/,'').trim().slice(0,70);
+  const clean=lines.find(x=>!labels.test(x)&&!brands.test(x)&&!/(rp\.?\s*\d|\d{1,2}[:.]\d{2}|\d{1,2}[\-/]\d{1,2})/i.test(x));
+  return(clean||'Import screenshot').slice(0,70);
+}
+async function smartImagePicked(input){
+  const file=input?.files?.[0];if(!file)return;
+  try{await processSmartImage(file)}finally{input.value=''}
+}
+async function handleSmartImageDrop(event){
+  event.preventDefault();
+  const file=[...(event.dataTransfer?.files||[])].find(f=>String(f.type||'').startsWith('image/'));
+  if(!file)return toast('Drop file gambar.');
+  await processSmartImage(file);
+}
+async function processSmartImage(file){
+  if(!String(file.type||'').startsWith('image/'))return toast('Pilih file gambar.');
+  const plugin=window.Capacitor?.Plugins?.NadmoOCR;
+  if(!plugin?.recognize)return toast('OCR gambar belum tersedia di build ini.');
+  toast('Membaca screenshot...');
+  try{
+    const data=await prepareOCRImage(file);
+    const result=await plugin.recognize({data});
+    const text=String(result?.text||'').trim();
+    if(!text)return toast('Tidak ada teks yang terbaca dari gambar.');
+    const wallets=await all('wallets'),source=detectOCRWallet(text,wallets),amount=extractOCRAmount(text),type=detectOCRType(text);
+    const raw={ocrText:text,amount,description:OCRDescription(text),walletId:source.wallet?.id||'',walletName:source.wallet?.name||'',detectedType:type||''};
+    const sourceLabel=source.wallet?source.wallet.name:(source.ambiguous?'Sumber terdeteksi tapi akun belum pasti':'Belum terdeteksi');
+    const typeLabel=type==='income'?'Pemasukan':type==='expense'?'Pengeluaran':'Belum pasti';
+    const buttons=type
+      ?`<button class="primary" onclick='openOCRDraft(${JSON.stringify(JSON.stringify(raw))},"${type}")'>LANJUT KE FORM</button>`
+      :`<div class="row"><button class="primary" onclick='openOCRDraft(${JSON.stringify(JSON.stringify(raw))},"expense")'>PENGELUARAN</button><button class="primary" onclick='openOCRDraft(${JSON.stringify(JSON.stringify(raw))},"income")'>PEMASUKAN</button></div>`;
+    modal(`<h2>Hasil Screenshot</h2><div class="ocr-preview"><div><span>Sumber</span><b>${esc(sourceLabel)}</b></div><div><span>Nominal</span><b>${amount?rupiah(amount):'Belum terbaca'}</b></div><div><span>Jenis</span><b>${typeLabel}</b></div><div><span>Deskripsi</span><b>${esc(raw.description)}</b></div></div><div class="muted small" style="margin:10px 0 14px">Semua hasil masih preview. Cek lagi sebelum simpan.</div>${buttons}`);
+  }catch(err){
+    toast('Gagal membaca screenshot: '+(err?.message||'OCR error'));
+  }
+}
+async function openOCRDraft(raw,forcedType){
+  const d=JSON.parse(raw),type=forcedType||d.detectedType||'expense';
+  const cats=(await all('categories')).filter(c=>c.type===type),cname=inferCategoryName(type,String(d.ocrText||'').toLowerCase()),cat=cname?cats.find(c=>c.name===cname):null;
+  closeModal();
+  await go(type,{amount:d.amount||'',description:d.description||'',walletId:d.walletId||'',walletName:d.walletName||'',categoryId:cat?.id||'',categoryName:cat?.name||''});
 }
 async function exportJSON(backup){let data={version:1,exportedAt:now(),wallets:await all('wallets'),categories:await all('categories'),transactions:await all('transactions'),transfers:await all('transfers'),settings:await all('settings')};download(JSON.stringify(data,null,2),backup?'nadmo-ai-backup.json':'nadmo-ai-data.json','application/json')} async function exportCSV(){let tx=await all('transactions');let rows=[['id','timestamp','type','amount','description','category','wallet'],...tx.map(t=>[t.id,t.timestamp,t.type,t.amount,t.description,t.categoryName,t.walletName])];let csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');download(csv,'nadmo-ai-transactions.csv','text/csv')} function download(content,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 document.querySelector('#restoreFile').addEventListener('change',async e=>{let file=e.target.files[0];if(!file)return;try{let data=JSON.parse(await file.text());for(const s of ['wallets','categories','transactions','transfers','settings']){let store=req(s,'readwrite');store.clear();for(const x of data[s]||[])store.put(x)}toast('Backup berhasil direstore.');go('home')}catch(err){toast('Backup tidak valid.')}})
