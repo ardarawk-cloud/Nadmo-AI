@@ -1,5 +1,5 @@
 const DB='nadmo_ai_db', VER=1; let db; let state={view:'home',editing:null,filters:{period:'month',q:'',wallet:'',category:'',from:'',to:''}};
-const EXPENSES=['Makan pagi','Makan siang/malam','Belanja bulanan','Listrik','Air','Gas LPG','Internet/WiFi','Paket data','Laundry','Perawatan rumah','Pajak PBB','Iuran kebersihan','Bensin/BBM','Parkir','Tol','Servis kendaraan','Angkutan umum/Ojek','Asuransi kendaraan','Pembayaran SPP','Biaya kursus','Asuransi kesehatan','Obat-obatan','Biaya dokter/Rumah sakit','Vitamin','Alat kesehatan','Membership gym','Perawatan diri','Pakaian','Gadget','Sepatu/Sandal','Aksesoris diri','Nonton bioskop','Nonton konser','Jalan/Makan di luar','Wisata','Game','Hobi','Amplop pernikahan','Ulang tahun','Sumbangan','Sedekah','Tabungan rutin','Dana darurat','Saham','Reksadana','Emas','Deposito','Asuransi jiwa','Properti','Dana pendidikan anak','Denda','Tilang','Biaya admin','Pengeluaran tak terduga','Rokok','Hutang'];
+const EXPENSES=['Langganan digital/VPS','Makan pagi','Makan siang/malam','Belanja bulanan','Listrik','Air','Gas LPG','Internet/WiFi','Paket data','Laundry','Perawatan rumah','Pajak PBB','Iuran kebersihan','Bensin/BBM','Parkir','Tol','Servis kendaraan','Angkutan umum/Ojek','Asuransi kendaraan','Pembayaran SPP','Biaya kursus','Asuransi kesehatan','Obat-obatan','Biaya dokter/Rumah sakit','Vitamin','Alat kesehatan','Membership gym','Perawatan diri','Pakaian','Gadget','Sepatu/Sandal','Aksesoris diri','Nonton bioskop','Nonton konser','Jalan/Makan di luar','Wisata','Game','Hobi','Amplop pernikahan','Ulang tahun','Sumbangan','Sedekah','Tabungan rutin','Dana darurat','Saham','Reksadana','Emas','Deposito','Asuransi jiwa','Properti','Dana pendidikan anak','Denda','Tilang','Biaya admin','Pengeluaran tak terduga','Rokok','Hutang'];
 const INCOMES=['Gaji','Bonus','Pendapatan usaha','Penjualan','Freelance','Komisi','Bunga','Dividen','Cashback','Pengembalian uang','Hadiah','Transfer masuk','Pemasukan lainnya'];
 const WALLETS=[['BCA','Bank'],['BLU PRIBADI','Bank'],['BLU BUSINESS','Bank'],['BLU VALAS','Bank'],['NEO BANK','Bank'],['SEABANK','Bank'],['JAGO','Bank'],['ALLO BANK','Bank'],['SUPERBANK','Bank'],['DANA PREMIUM','E-Wallet'],['GOPAY','E-Wallet'],['OVO','E-Wallet'],['SHOPEEPAY','E-Wallet'],['DOKU','E-Wallet'],['PAYPAL','E-Wallet'],['HONEST','Kredit/Paylater'],['DANA CICIL','Kredit/Paylater'],['DANA+','Kredit/Paylater'],['SHOPEE PAYLATER','Kredit/Paylater'],['SHOPEE PINJAM','Kredit/Paylater'],['TREASURY','Investasi'],['BIBIT','Investasi'],['TOKOCRYPTO','Crypto/Web3'],['INDODAX','Crypto/Web3'],['METAMASK','Crypto/Web3'],['E-MONEY CARD','E-Wallet'],['CASH','Cash']];
 const WALLET_GROUPS=[['Bank','BANK'],['E-Wallet','E-WALLET'],['Kredit/Paylater','PAYLATER / KREDIT'],['Investasi','INVESTASI'],['Crypto/Web3','CRYPTO / WEB3'],['Cash','CASH']];
@@ -13,13 +13,13 @@ function privacyToggle(){return `<button type="button" class="privacy-toggle" ar
 function toggleBalancePrivacy(){balancePrivacyHidden=!balancePrivacyHidden;localStorage.setItem('nadmo_balance_hidden',balancePrivacyHidden?'1':'0');render()}
 function walletGroupsMarkup(wallets,selectedId=''){return WALLET_GROUPS.map(([type,label])=>{let group=wallets.filter(w=>w.type===type);if(!group.length)return'';return `<div class="wallet-group-block"><div class="wallet-group-label">${label}<span>${group.length}</span></div><div class="wallet-group-grid">${group.map(w=>`<button class="choice ${selectedId===w.id?'selected':''}" data-id="${w.id}" onclick="selectChoice(this,'walletGrid')">${esc(w.name)}<small>${esc(w.type)}</small></button>`).join('')}</div></div>`}).join('')}
 function req(store,mode='readonly'){return db.transaction(store,mode).objectStore(store)} function all(store){return new Promise((res,rej)=>{let r=req(store).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})} function get(store,id){return new Promise((res,rej)=>{let r=req(store).get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})} function put(store,val){return new Promise((res,rej)=>{let r=req(store,'readwrite').put(val);r.onsuccess=()=>res(val);r.onerror=()=>rej(r.error)})} function del(store,id){return new Promise((res,rej)=>{let r=req(store,'readwrite').delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
-async function init(){db=await new Promise((res,rej)=>{let r=indexedDB.open(DB,VER);r.onupgradeneeded=e=>{let d=e.target.result;['wallets','categories','transactions','transfers','settings'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'})})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}); if((await all('categories')).length===0){for(const n of EXPENSES) await put('categories',{id:uid(),name:n,type:'expense'});for(const n of INCOMES) await put('categories',{id:uid(),name:n,type:'income'})} let wallets=await all('wallets'),keys=new Set(wallets.map(w=>walletKey(w.name)));for(const [name,type] of WALLETS){let key=walletKey(name);if(!keys.has(key)){await put('wallets',{id:uid(),name,type,initialBalance:0,createdAt:now()});keys.add(key)}} render()}
+async function init(){db=await new Promise((res,rej)=>{let r=indexedDB.open(DB,VER);r.onupgradeneeded=e=>{let d=e.target.result;['wallets','categories','transactions','transfers','settings'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'})})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});await ensureDefaultCategories();await repairSmartInputAirMislabels();let wallets=await all('wallets'),keys=new Set(wallets.map(w=>walletKey(w.name)));for(const [name,type] of WALLETS){let key=walletKey(name);if(!keys.has(key)){await put('wallets',{id:uid(),name,type,initialBalance:0,createdAt:now()});keys.add(key)}}render()}
 function iconFor(t){return t==='income'?'↗':t==='expense'?'↘':'⇄'}
 function topbar(){return `<div class="topbar"><div><div class="brand">NADMO <b>AI</b></div><div class="muted small">Personal Finance</div></div><button class="iconbtn" onclick="go('settings')">⚙</button></div>`}
 function bottom(){return `<nav class="bottom"><button class="bottom-btn exp" onclick="go('expense')">📉<br>PENGELUARAN</button><button class="bottom-btn inc" onclick="go('income')">📈<br>PEMASUKAN</button><button class="bottom-btn sal" onclick="go('balance')">💰<br>CEK SALDO</button></nav>`}
 async function walletBalance(w){let tx=await all('transactions'), tr=await all('transfers');let b=Number(w.initialBalance)||0;for(const t of tx)if(t.walletId===w.id)b+=t.type==='income'?t.amount:-t.amount;for(const x of tr){if(x.fromWalletId===w.id)b-=x.amount;if(x.toWalletId===w.id)b+=x.amount}return b}
 async function totals(){let tx=await all('transactions'), wallets=await all('wallets');let day=new Date().toISOString().slice(0,10), d=new Date(), month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;let obj={incomeToday:0,expenseToday:0,incomeMonth:0,expenseMonth:0,balance:0};for(const t of tx){let dt=t.timestamp.slice(0,10);if(dt===day)obj[t.type==='income'?'incomeToday':'expenseToday']+=t.amount;if(dt.slice(0,7)===month)obj[t.type==='income'?'incomeMonth':'expenseMonth']+=t.amount}for(const w of wallets){if(w.type!=='Kredit/Paylater')obj.balance+=await walletBalance(w)}return obj}
-async function home(){let t=await totals(), allTx=await all('transactions'), tx=[...allTx].sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).slice(0,6), d=new Date(), month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, catMap={};for(const x of allTx.filter(x=>x.type==='expense'&&x.timestamp.slice(0,7)===month))catMap[x.categoryName]=(catMap[x.categoryName]||0)+x.amount;let topCats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,5),catMax=Math.max(...topCats.map(x=>x[1]),1);return `<div class="app">${topbar()}<div style="margin:4px 2px 14px"><div class="muted small">Selamat Datang di</div><div style="font-size:25px;font-weight:900">NADMO AI</div></div><div class="hero privacy-hero"><div class="eyebrow">Total saldo aktual</div>${privacyToggle()}<div class="balance privacy-balance">${privateRupiah(t.balance)}</div><div class="metric-grid"><div class="metric"><div class="muted small">Pengeluaran hari ini</div><div class="v expense">${rupiah(t.expenseToday)}</div></div><div class="metric"><div class="muted small">Pemasukan hari ini</div><div class="v income">${rupiah(t.incomeToday)}</div></div><div class="metric"><div class="muted small">Selisih hari ini</div><div class="v">${rupiah(t.incomeToday-t.expenseToday)}</div></div><div class="metric"><div class="muted small">Bulan ini</div><div class="v">${rupiah(t.incomeMonth-t.expenseMonth)}</div></div></div></div><div class="fabrow"><button class="ghost" onclick="go('history')">🧾 Riwayat</button><button class="ghost" onclick="go('transfer')">⇄ Pindah Saldo</button></div><div class="section-title"><span>NADMO AI</span><span class="muted small">Natural input</span></div><div class="ai-box"><textarea id="aiText" class="input ai-input" placeholder="Contoh: Beli kopi 25 ribu pakai BCA"></textarea><button class="primary" style="margin-top:10px" onclick="parseAI()">Buat Draft Transaksi</button></div><div class="section-title"><span>Ringkasan Bulanan</span></div><div class="card"><div class="bars"><div class="barcol"><div class="bar in" style="height:${Math.max(3,t.incomeMonth/Math.max(t.incomeMonth,t.expenseMonth,1)*100)}%"></div></div><div class="barcol"><div class="bar out" style="height:${Math.max(3,t.expenseMonth/Math.max(t.incomeMonth,t.expenseMonth,1)*100)}%"></div></div></div><div class="legend"><span><i class="dot" style="background:#2caa7d"></i>Pemasukan ${rupiah(t.incomeMonth)}</span><span><i class="dot" style="background:#d94c65"></i>Pengeluaran ${rupiah(t.expenseMonth)}</span></div></div><div class="section-title"><span>Kategori Pengeluaran Terbesar</span></div><div class="card">${topCats.length?topCats.map(([n,v])=>`<div style="margin:12px 0"><div class="summary-row"><span>${esc(n)}</span><b>${rupiah(v)}</b></div><div style="height:7px;background:#172235;border-radius:8px;overflow:hidden"><div style="height:100%;width:${v/catMax*100}%;background:#4b8cff;border-radius:8px"></div></div></div>`).join(''):'<div class="empty">Belum ada pengeluaran bulan ini.</div>'}</div><div class="section-title"><span>Transaksi terbaru</span><button class="chip" onclick="go('history')">Lihat semua</button></div><div class="card">${tx.length?tx.map(txHtml).join(''):'<div class="empty">Belum ada transaksi.</div>'}</div>${bottom()}</div>`}
+async function home(){let t=await totals(), allTx=await all('transactions'), tx=[...allTx].sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).slice(0,6), d=new Date(), month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, catMap={};for(const x of allTx.filter(x=>x.type==='expense'&&x.timestamp.slice(0,7)===month))catMap[x.categoryName]=(catMap[x.categoryName]||0)+x.amount;let topCats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,5),catMax=Math.max(...topCats.map(x=>x[1]),1);return `<div class="app">${topbar()}<div style="margin:4px 2px 14px"><div class="muted small">Selamat Datang di</div><div style="font-size:25px;font-weight:900">NADMO AI</div></div><div class="hero privacy-hero"><div class="eyebrow">Total saldo aktual</div>${privacyToggle()}<div class="balance privacy-balance">${privateRupiah(t.balance)}</div><div class="metric-grid"><div class="metric"><div class="muted small">Pengeluaran hari ini</div><div class="v expense">${rupiah(t.expenseToday)}</div></div><div class="metric"><div class="muted small">Pemasukan hari ini</div><div class="v income">${rupiah(t.incomeToday)}</div></div><div class="metric"><div class="muted small">Selisih hari ini</div><div class="v">${rupiah(t.incomeToday-t.expenseToday)}</div></div><div class="metric"><div class="muted small">Bulan ini</div><div class="v">${rupiah(t.incomeMonth-t.expenseMonth)}</div></div></div></div><div class="fabrow"><button class="ghost" onclick="go('history')">🧾 Riwayat</button><button class="ghost" onclick="go('transfer')">⇄ Pindah Saldo</button></div><div class="section-title"><span>NADMO AI</span><span class="muted small">Natural input</span></div><div class="ai-box smart-ai-box" ondragover="event.preventDefault()" ondrop="handleSmartImageDrop(event)"><textarea id="aiText" class="input ai-input" placeholder="Contoh: Beli kopi 25 ribu pakai BCA"></textarea><div class="smart-actions"><button class="primary" onclick="parseAI()">Buat Draft Transaksi</button><button class="ghost smart-image-btn" onclick="document.querySelector(\'#smartImageInput\').click()">Baca Screenshot</button></div><input id="smartImageInput" type="file" accept="image/*" hidden onchange="smartImagePicked(this)"><div class="smart-image-note">Pilih / drop screenshot transaksi. OCR berjalan di perangkat.</div></div><div class="section-title"><span>Ringkasan Bulanan</span></div><div class="card"><div class="bars"><div class="barcol"><div class="bar in" style="height:${Math.max(3,t.incomeMonth/Math.max(t.incomeMonth,t.expenseMonth,1)*100)}%"></div></div><div class="barcol"><div class="bar out" style="height:${Math.max(3,t.expenseMonth/Math.max(t.incomeMonth,t.expenseMonth,1)*100)}%"></div></div></div><div class="legend"><span><i class="dot" style="background:#2caa7d"></i>Pemasukan ${rupiah(t.incomeMonth)}</span><span><i class="dot" style="background:#d94c65"></i>Pengeluaran ${rupiah(t.expenseMonth)}</span></div></div><div class="section-title"><span>Kategori Pengeluaran Terbesar</span></div><div class="card">${topCats.length?topCats.map(([n,v])=>`<div style="margin:12px 0"><div class="summary-row"><span>${esc(n)}</span><b>${rupiah(v)}</b></div><div style="height:7px;background:#172235;border-radius:8px;overflow:hidden"><div style="height:100%;width:${v/catMax*100}%;background:#4b8cff;border-radius:8px"></div></div></div>`).join(''):'<div class="empty">Belum ada pengeluaran bulan ini.</div>'}</div><div class="section-title"><span>Transaksi terbaru</span><button class="chip" onclick="go('history')">Lihat semua</button></div><div class="card">${tx.length?tx.map(txHtml).join(''):'<div class="empty">Belum ada transaksi.</div>'}</div>${bottom()}</div>`}
 function txHtml(t){return `<div class="tx" onclick="editTx('${t.id}')"><div class="tx-ico">${iconFor(t.type)}</div><div><div class="tx-title">${esc(t.description||t.categoryName||'Transaksi')}</div><div class="tx-sub">${esc(t.categoryName||'')} · ${esc(t.walletName||'')} · ${new Date(t.timestamp).toLocaleString('id-ID')}</div></div><div class="tx-amount ${t.type==='income'?'income':'expense'}">${t.type==='income'?'+ ':'- '}${rupiah(t.amount)}</div></div>`}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 async function form(type,draft={}){let cats=(await all('categories')).filter(c=>c.type===type),wallets=await all('wallets');let e=state.editing?await get('transactions',state.editing):null,d={...e,...draft};return `<div class="app"><div class="pagehead"><button class="back" onclick="go('home')">‹</button><h1>${type==='expense'?'Pengeluaran':'Pemasukan'}</h1></div><div class="card"><div class="field"><div class="label">Nominal</div><input id="amount" class="input amount-input" inputmode="numeric" placeholder="Rp 0" value="${d.amount||''}" oninput="fmtAmount(this)"></div><div class="field"><div class="label">Deskripsi</div><input id="desc" class="input" placeholder="Contoh: Beli kopi" value="${esc(d.description||'')}"></div><div class="label">Kategori</div><div class="grid" id="catGrid">${cats.map(c=>`<button class="choice ${d.categoryId===c.id?'selected':''}" data-id="${c.id}" onclick="selectChoice(this,'catGrid')">${esc(c.name)}</button>`).join('')}</div><div class="section-title"><span>${type==='expense'?'Pilih Sumber Dana':'Dompet Tujuan'}</span></div><div id="walletGrid" class="wallet-groups">${walletGroupsMarkup(wallets,d.walletId||'')}</div><button class="primary" style="margin-top:18px" onclick="previewTx('${type}')">Lanjut ke Konfirmasi</button></div>${bottom()}</div>`}
@@ -37,7 +37,229 @@ async function settings(){let ws=await all('wallets'),cs=await all('categories')
 async function walletEditor(id){let w=id?await get('wallets',id):{name:'',type:'Bank',initialBalance:0};modal(`<h2>${id?'Edit':'Tambah'} Wallet</h2><div class="field"><div class="label">Nama</div><input id="wName" class="input" value="${esc(w.name)}"></div><div class="field"><div class="label">Tipe</div><select id="wType" class="select">${['Bank','E-Wallet','Kredit/Paylater','Investasi','Crypto/Web3','Cash'].map(x=>`<option ${w.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><div class="label">Saldo awal</div><input id="wBal" class="input" inputmode="numeric" value="${w.initialBalance||0}"></div><div class="row"><button class="primary" onclick="saveWallet('${id||''}')">Simpan</button>${id?`<button class="danger" onclick="removeWallet('${id}')">Hapus</button>`:''}</div>`)} async function saveWallet(id){let old=id?await get('wallets',id):null;await put('wallets',{id:id||uid(),name:document.querySelector('#wName').value.trim(),type:document.querySelector('#wType').value,initialBalance:Number(document.querySelector('#wBal').value.replace(/\D/g,''))||0,createdAt:old?.createdAt||now()});closeModal();go('settings')} async function removeWallet(id){let tx=await all('transactions'),tr=await all('transfers');if(tx.some(t=>t.walletId===id)||tr.some(t=>t.fromWalletId===id||t.toWalletId===id))return toast('Wallet masih dipakai transaksi/transfer.');await del('wallets',id);closeModal();go('settings')}
 async function categoryManager(){let cs=await all('categories');modal(`<h2>Kelola Kategori</h2>${cs.map(c=>`<div class="wallet" onclick="categoryEditor('${c.id}')"><div><div class="wallet-name">${esc(c.name)}</div><div class="wallet-type">${c.type==='income'?'Pemasukan':'Pengeluaran'}</div></div><div>›</div></div>`).join('')}`)} async function categoryEditor(id){let c=id?await get('categories',id):{name:'',type:'expense'};modal(`<h2>${id?'Edit':'Tambah'} Kategori</h2><div class="field"><div class="label">Nama</div><input id="cName" class="input" value="${esc(c.name)}"></div><div class="field"><div class="label">Jenis</div><select id="cType" class="select"><option value="expense" ${c.type==='expense'?'selected':''}>Pengeluaran</option><option value="income" ${c.type==='income'?'selected':''}>Pemasukan</option></select></div><div class="row"><button class="primary" onclick="saveCategory('${id||''}')">Simpan</button>${id?`<button class="danger" onclick="removeCategory('${id}')">Hapus</button>`:''}</div>`)} async function saveCategory(id){await put('categories',{id:id||uid(),name:document.querySelector('#cName').value.trim(),type:document.querySelector('#cType').value});closeModal();go('settings')} async function removeCategory(id){let tx=await all('transactions');if(tx.some(t=>t.categoryId===id))return toast('Kategori masih dipakai transaksi.');await del('categories',id);closeModal();go('settings')}
 function parseNumber(text){let s=text.toLowerCase().replace(/,/g,'.');let m=s.match(/(\d+(?:\.\d+)?)\s*(juta|jt|ribu|rb|k)?/g);if(!m)return 0;let best=0;for(let x of m){let z=x.match(/(\d+(?:\.\d+)?)\s*(juta|jt|ribu|rb|k)?/),n=parseFloat(z[1]),u=z[2];if(u==='juta'||u==='jt')n*=1e6;else if(u==='ribu'||u==='rb'||u==='k')n*=1e3;best=Math.max(best,n)}return best}
-async function parseAI(){let text=document.querySelector('#aiText').value.trim();if(!text)return toast('Tulis transaksi dulu.');let lower=text.toLowerCase(),type=/(gaji|bonus|masuk|pendapatan|cashback|dividen|bunga|terima)/.test(lower)?'income':'expense',amount=parseNumber(lower),ws=await all('wallets'),cs=(await all('categories')).filter(c=>c.type===type);let wallet=ws.find(w=>lower.includes(w.name.toLowerCase()))||ws.find(w=>lower.includes(w.name.toLowerCase().split(' ')[0]));let hints=type==='expense'?[['kopi','Jalan/Makan di luar'],['makan','Makan siang/malam'],['bensin','Bensin/BBM'],['rokok','Rokok'],['listrik','Listrik'],['internet','Internet/WiFi'],['game','Game'],['obat','Obat-obatan']]:[['gaji','Gaji'],['bonus','Bonus'],['cashback','Cashback'],['dividen','Dividen'],['freelance','Freelance']];let cname=(hints.find(([k])=>lower.includes(k))||[])[1],cat=cs.find(c=>c.name===cname)||cs[0];if(!amount||!wallet||!cat)return toast('NADMO AI belum yakin. Lengkapi transaksi secara manual.');let desc=text.replace(/\b\d+(?:[.,]\d+)?\s*(juta|jt|ribu|rb|k)?\b/ig,'').replace(new RegExp(wallet.name,'ig'),'').replace(/\b(pakai|ke|dari|menggunakan)\b/ig,'').replace(/\s+/g,' ').trim();let d={type,amount,description:desc||text,categoryId:cat.id,categoryName:cat.name,walletId:wallet.id,walletName:wallet.name};modal(`<h2>Preview NADMO AI</h2><div class="muted small" style="margin-bottom:10px">Belum disimpan. Periksa dulu hasil pembacaan.</div>${summary(d)}<button class="primary" onclick='saveTx(${JSON.stringify(JSON.stringify(d))})'>KONFIRMASI & SIMPAN</button>`)}
+function inferCategoryName(type,lower){
+  const rules=type==='expense'?[
+    [/(dokter|klinik|rumah sakit|\brs\b|medical check|berobat)/,'Biaya dokter/Rumah sakit'],
+    [/(laundry|loundry|cuci baju|dry clean)/,'Laundry'],
+    [/(\bvps\b|hosting|server|domain|cloudflare|cloud server|web hosting|digitalocean|linode|vultr)/,'Langganan digital/VPS'],
+    [/(wifi|internet|indihome|biznet|myrepublic)/,'Internet/WiFi'],
+    [/(belanja|groceries|supermarket|minimarket|alfamart|indomaret)/,'Belanja bulanan'],
+    [/(kopi|coffee|cafe|kafe|nongkrong)/,'Jalan/Makan di luar'],
+    [/(sarapan|breakfast)/,'Makan pagi'],
+    [/(makan|lunch|dinner|warung|resto|restaurant)/,'Makan siang/malam'],
+    [/(bensin|bbm|pertalite|pertamax|solar|shell|spbu)/,'Bensin/BBM'],
+    [/(parkir|parking)/,'Parkir'],
+    [/(tol|toll)/,'Tol'],
+    [/(servis|service motor|service mobil|ganti oli|ban motor|ban mobil)/,'Servis kendaraan'],
+    [/(grab|gojek|ojek|taxi|taksi|angkot|bus|transport)/,'Angkutan umum/Ojek'],
+    [/(listrik|pln|token listrik)/,'Listrik'],
+    [/(pdam|tagihan air|bayar air|air minum)/,'Air'],
+    [/(gas|lpg)/,'Gas LPG'],
+    [/(paket data|pulsa|kuota)/,'Paket data'],
+    [/(obat|apotek|pharmacy)/,'Obat-obatan'],
+    [/(vitamin|suplemen)/,'Vitamin'],
+    [/(gym|fitness)/,'Membership gym'],
+    [/(rokok|cigarette)/,'Rokok'],
+    [/(game|steam|playstation|psn|xbox)/,'Game'],
+    [/(bioskop|cinema|movie)/,'Nonton bioskop'],
+    [/(konser|concert)/,'Nonton konser'],
+    [/(wisata|liburan|travel|hotel|villa)/,'Wisata'],
+    [/(sedekah|donasi|zakat)/,'Sedekah'],
+    [/(sumbangan)/,'Sumbangan'],
+    [/(denda|penalty)/,'Denda'],
+    [/(tilang)/,'Tilang'],
+    [/(admin|biaya bank|fee bank)/,'Biaya admin'],
+    [/(hutang|utang)/,'Hutang']
+  ]:[
+    [/(gaji|salary)/,'Gaji'],
+    [/(bonus)/,'Bonus'],
+    [/(freelance|fee job|job dj|wedding dj|gig)/,'Freelance'],
+    [/(komisi|commission)/,'Komisi'],
+    [/(cashback)/,'Cashback'],
+    [/(dividen|dividend)/,'Dividen'],
+    [/(bunga|interest)/,'Bunga'],
+    [/(refund|pengembalian)/,'Pengembalian uang'],
+    [/(hadiah|gift)/,'Hadiah'],
+    [/(penjualan|jualan|terjual|sold)/,'Penjualan'],
+    [/(usaha|bisnis|papa sauce|pendapatan usaha)/,'Pendapatan usaha'],
+    [/(transfer masuk|ditransfer|transfer dari)/,'Transfer masuk']
+  ];
+  for(const [re,name] of rules) if(re.test(lower)) return name;
+  return null;
+}
+async function ensureDefaultCategories(){
+  const existing=await all('categories'),keys=new Set(existing.map(c=>c.type+':'+String(c.name||'').toLowerCase()));
+  for(const n of EXPENSES){const k='expense:'+n.toLowerCase();if(!keys.has(k)){await put('categories',{id:uid(),name:n,type:'expense'});keys.add(k)}}
+  for(const n of INCOMES){const k='income:'+n.toLowerCase();if(!keys.has(k)){await put('categories',{id:uid(),name:n,type:'income'});keys.add(k)}}
+}
+async function repairSmartInputAirMislabels(){
+  const tx=await all('transactions'),cats=await all('categories');
+  const rules=[
+    [/(dokter|klinik|rumah sakit|\brs\b|medical check|berobat)/,'Biaya dokter/Rumah sakit'],
+    [/(laundry|loundry|cuci baju|dry clean)/,'Laundry'],
+    [/(\bvps\b|hosting|server|domain|cloudflare|cloud server|web hosting|digitalocean|linode|vultr)/,'Langganan digital/VPS'],
+    [/(belanja|groceries|supermarket|minimarket|alfamart|indomaret)/,'Belanja bulanan']
+  ];
+  for(const t of tx){
+    if(t.type!=='expense'||t.categoryName!=='Air') continue;
+    const lower=String(t.description||'').toLowerCase();
+    let target=null;
+    for(const [re,name] of rules){if(re.test(lower)){target=name;break}}
+    if(!target) continue;
+    const cat=cats.find(c=>c.type==='expense'&&c.name===target);
+    if(!cat) continue;
+    t.categoryId=cat.id;t.categoryName=cat.name;t.updatedAt=now();await put('transactions',t);
+  }
+}
+async function parseAI(){
+  let text=document.querySelector('#aiText').value.trim();
+  if(!text)return toast('Tulis transaksi dulu.');
+  let lower=text.toLowerCase();
+  let type=/(gaji|bonus|masuk|pendapatan|cashback|dividen|bunga|terima|dibayar|payment|refund|komisi|jualan|terjual)/.test(lower)?'income':'expense';
+  let amount=parseNumber(lower),ws=await all('wallets'),cs=(await all('categories')).filter(c=>c.type===type);
+  let wallet=ws.find(w=>lower.includes(w.name.toLowerCase()))||ws.find(w=>lower.includes(w.name.toLowerCase().split(' ')[0]));
+  let cname=inferCategoryName(type,lower),cat=cname?cs.find(c=>c.name===cname):null;
+  if(!amount)return toast('Nominal belum terbaca. Contoh: dokter 235 ribu pakai BCA.');
+  if(!wallet)return toast('Wallet belum terbaca. Sebutkan BCA, DANA, GoPay, dll.');
+  if(!cat)return toast('Kategori belum yakin. Buka input manual supaya tidak salah kategori.');
+  let desc=text.replace(/\b\d+(?:[.,]\d+)?\s*(juta|jt|ribu|rb|k)?\b/ig,'').replace(new RegExp(wallet.name,'ig'),'').replace(/\b(pakai|ke|dari|menggunakan|masuk)\b/ig,'').replace(/\s+/g,' ').trim();
+  let d={type,amount,description:desc||text,categoryId:cat.id,categoryName:cat.name,walletId:wallet.id,walletName:wallet.name};
+  modal(`<h2>Preview NADMO AI</h2><div class="muted small" style="margin-bottom:10px">Belum disimpan. Periksa dulu hasil pembacaan.</div>${summary(d)}<button class="primary" onclick='saveTx(${JSON.stringify(JSON.stringify(d))})'>KONFIRMASI & SIMPAN</button>`)
+}
+
+function prepareOCRImage(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('Gagal membaca gambar.'));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error('Format gambar tidak didukung.'));
+      img.onload=()=>{
+        const max=2200,scale=Math.min(1,max/Math.max(img.width,img.height));
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.round(img.width*scale));
+        canvas.height=Math.max(1,Math.round(img.height*scale));
+        const ctx=canvas.getContext('2d',{alpha:false});
+        ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.92));
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function detectOCRType(text){
+  const l=String(text||'').toLowerCase();
+  if(/(uang masuk|transfer masuk|received|diterima|pemasukan|incoming|refund|cashback|gaji|salary|credit\b|kredit masuk)/.test(l))return'income';
+  if(/(pembayaran|payment|bayar|transfer ke|kirim|purchase|merchant|debit\b|debet|uang keluar|pengeluaran|withdraw)/.test(l))return'expense';
+  return null;
+}
+function extractOCRAmount(text){
+  const lines=String(text||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  const found=[];
+  lines.forEach((line,index)=>{
+    const matches=[...line.matchAll(/(?:rp\.?\s*)?(\d{1,3}(?:[.\s]\d{3})+|\d{4,})/gi)];
+    for(const m of matches){
+      const value=Number(String(m[1]).replace(/\D/g,''));
+      if(!Number.isFinite(value)||value<1000)continue;
+      let score=/rp/i.test(m[0])?4:0;
+      if(/(nominal|jumlah|total|amount|transaksi|bayar|pembayaran|payment|debit|debet|kredit|credit)/i.test(line))score+=5;
+      if(/(saldo|balance|limit|tersedia|sisa|remaining)/i.test(line))score-=7;
+      found.push({value,score,index,line});
+    }
+  });
+  if(!found.length)return 0;
+  found.sort((a,b)=>b.score-a.score||a.index-b.index);
+  return found[0].value;
+}
+function detectOCRWallet(text,wallets){
+  const l=String(text||'').toLowerCase();
+  const rules=[
+    [/mybca|bca mobile|klikbca/,'BCA',12],
+    [/blu\s*(business|bisnis)/,'BLU BUSINESS',14],
+    [/blu\s*valas|bluvalas/,'BLU VALAS',14],
+    [/bluaccount|blu newbie|blu by bca digital/,'BLU PRIBADI',11],
+    [/gopay/,'GOPAY',12],
+    [/dana\s*cicil/,'DANA CICIL',14],
+    [/dana\s*\+/,'DANA+',14],
+    [/\bdana\b/,'DANA PREMIUM',10],
+    [/shopee\s*paylater|spaylater/,'SHOPEE PAYLATER',14],
+    [/shopee\s*pinjam|spinjam/,'SHOPEE PINJAM',14],
+    [/shopee\s*pay|shopeepay|spay\b/,'SHOPEEPAY',12],
+    [/\bovo\b/,'OVO',12],
+    [/\bhonest\b/,'HONEST',12],
+    [/\bdoku\b/,'DOKU',12],
+    [/neo\s*bank|neobank|bank neo commerce/,'NEO BANK',12],
+    [/seabank|sea bank/,'SEABANK',12],
+    [/bank jago|\bjago\b/,'JAGO',12],
+    [/allo\s*bank/,'ALLO BANK',12],
+    [/superbank/,'SUPERBANK',12],
+    [/paypal/,'PAYPAL',12],
+    [/treasury/,'TREASURY',12],
+    [/tokocrypto/,'TOKOCRYPTO',12],
+    [/indodax/,'INDODAX',12],
+    [/\bbibit\b/,'BIBIT',12],
+    [/metamask/,'METAMASK',12],
+    [/e[-\s]?money|flazz/,'E-MONEY CARD',10]
+  ];
+  const hits=[];
+  for(const [re,name,score] of rules)if(re.test(l)){const w=wallets.find(x=>String(x.name||'').toUpperCase()===name);if(w)hits.push({wallet:w,score})}
+  if(/\bblu\b/.test(l)&&!hits.some(x=>x.wallet.name.startsWith('BLU '))){
+    for(const name of ['BLU PRIBADI','BLU BUSINESS','BLU VALAS']){const w=wallets.find(x=>x.name===name);if(w)hits.push({wallet:w,score:6})}
+  }
+  hits.sort((a,b)=>b.score-a.score);
+  if(!hits.length)return{wallet:null,ambiguous:false,candidates:[]};
+  const top=hits[0].score,topHits=hits.filter(x=>x.score===top);
+  return{wallet:topHits.length===1?topHits[0].wallet:null,ambiguous:topHits.length>1,candidates:topHits.map(x=>x.wallet)};
+}
+function OCRDescription(text){
+  const lines=String(text||'').split(/\n+/).map(x=>x.trim()).filter(x=>x.length>=3&&x.length<=70);
+  const labels=/(detail transaksi|transaksi berhasil|berhasil|success|tanggal|waktu|nominal|jumlah|total|saldo|balance|reference|referensi|id transaksi|receipt|struk|home|beranda|riwayat)/i;
+  const brands=/(mybca|bca mobile|blu|gopay|dana|shopee|ovo|honest|doku|neobank|seabank|jago|allo bank|superbank|paypal|treasury|tokocrypto|indodax|bibit|metamask)/i;
+  const withLabel=lines.find(x=>/(merchant|penerima|tujuan|keterangan|catatan|description|deskripsi)\s*[:\-]/i.test(x));
+  if(withLabel)return withLabel.replace(/^.*?[:\-]\s*/,'').trim().slice(0,70);
+  const clean=lines.find(x=>!labels.test(x)&&!brands.test(x)&&!/(rp\.?\s*\d|\d{1,2}[:.]\d{2}|\d{1,2}[\-/]\d{1,2})/i.test(x));
+  return(clean||'Import screenshot').slice(0,70);
+}
+async function smartImagePicked(input){
+  const file=input?.files?.[0];if(!file)return;
+  try{await processSmartImage(file)}finally{input.value=''}
+}
+async function handleSmartImageDrop(event){
+  event.preventDefault();
+  const file=[...(event.dataTransfer?.files||[])].find(f=>String(f.type||'').startsWith('image/'));
+  if(!file)return toast('Drop file gambar.');
+  await processSmartImage(file);
+}
+async function processSmartImage(file){
+  if(!String(file.type||'').startsWith('image/'))return toast('Pilih file gambar.');
+  const plugin=window.Capacitor?.Plugins?.NadmoOCR;
+  if(!plugin?.recognize)return toast('OCR gambar belum tersedia di build ini.');
+  toast('Membaca screenshot...');
+  try{
+    const data=await prepareOCRImage(file);
+    const result=await plugin.recognize({data});
+    const text=String(result?.text||'').trim();
+    if(!text)return toast('Tidak ada teks yang terbaca dari gambar.');
+    const wallets=await all('wallets'),source=detectOCRWallet(text,wallets),amount=extractOCRAmount(text),type=detectOCRType(text);
+    const raw={ocrText:text,amount,description:OCRDescription(text),walletId:source.wallet?.id||'',walletName:source.wallet?.name||'',detectedType:type||''};
+    const sourceLabel=source.wallet?source.wallet.name:(source.ambiguous?'Sumber terdeteksi tapi akun belum pasti':'Belum terdeteksi');
+    const typeLabel=type==='income'?'Pemasukan':type==='expense'?'Pengeluaran':'Belum pasti';
+    const buttons=type
+      ?`<button class="primary" onclick='openOCRDraft(${JSON.stringify(JSON.stringify(raw))},"${type}")'>LANJUT KE FORM</button>`
+      :`<div class="row"><button class="primary" onclick='openOCRDraft(${JSON.stringify(JSON.stringify(raw))},"expense")'>PENGELUARAN</button><button class="primary" onclick='openOCRDraft(${JSON.stringify(JSON.stringify(raw))},"income")'>PEMASUKAN</button></div>`;
+    modal(`<h2>Hasil Screenshot</h2><div class="ocr-preview"><div><span>Sumber</span><b>${esc(sourceLabel)}</b></div><div><span>Nominal</span><b>${amount?rupiah(amount):'Belum terbaca'}</b></div><div><span>Jenis</span><b>${typeLabel}</b></div><div><span>Deskripsi</span><b>${esc(raw.description)}</b></div></div><div class="muted small" style="margin:10px 0 14px">Semua hasil masih preview. Cek lagi sebelum simpan.</div>${buttons}`);
+  }catch(err){
+    toast('Gagal membaca screenshot: '+(err?.message||'OCR error'));
+  }
+}
+async function openOCRDraft(raw,forcedType){
+  const d=JSON.parse(raw),type=forcedType||d.detectedType||'expense';
+  const cats=(await all('categories')).filter(c=>c.type===type),cname=inferCategoryName(type,String(d.ocrText||'').toLowerCase()),cat=cname?cats.find(c=>c.name===cname):null;
+  closeModal();
+  await go(type,{amount:d.amount||'',description:d.description||'',walletId:d.walletId||'',walletName:d.walletName||'',categoryId:cat?.id||'',categoryName:cat?.name||''});
+}
 async function exportJSON(backup){let data={version:1,exportedAt:now(),wallets:await all('wallets'),categories:await all('categories'),transactions:await all('transactions'),transfers:await all('transfers'),settings:await all('settings')};download(JSON.stringify(data,null,2),backup?'nadmo-ai-backup.json':'nadmo-ai-data.json','application/json')} async function exportCSV(){let tx=await all('transactions');let rows=[['id','timestamp','type','amount','description','category','wallet'],...tx.map(t=>[t.id,t.timestamp,t.type,t.amount,t.description,t.categoryName,t.walletName])];let csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');download(csv,'nadmo-ai-transactions.csv','text/csv')} function download(content,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 document.querySelector('#restoreFile').addEventListener('change',async e=>{let file=e.target.files[0];if(!file)return;try{let data=JSON.parse(await file.text());for(const s of ['wallets','categories','transactions','transfers','settings']){let store=req(s,'readwrite');store.clear();for(const x of data[s]||[])store.put(x)}toast('Backup berhasil direstore.');go('home')}catch(err){toast('Backup tidak valid.')}})
 function modal(html){let m=document.createElement('div');m.className='modal';m.id='modal';m.innerHTML=`<div class="sheet">${html}<button class="ghost" style="width:100%;margin-top:10px" onclick="closeModal()">Batal</button></div>`;document.body.appendChild(m)} function closeModal(){document.querySelector('#modal')?.remove()} function toast(msg){document.querySelector('.toast')?.remove();let t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2400)}

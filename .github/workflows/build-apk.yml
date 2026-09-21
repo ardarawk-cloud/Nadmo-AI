@@ -39,6 +39,9 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Inject on-device OCR
+        run: node scripts/inject-nadmo-ocr.mjs
+
       - name: Apply NADMO AI app identity
         shell: bash
         run: |
@@ -47,8 +50,8 @@ jobs:
           base64 --decode assets/nadmo_icon_256.jpg.b64 > android/app/src/main/res/drawable-nodpi/nadmo_icon.jpg
           sed -i 's#android:icon="@mipmap/ic_launcher"#android:icon="@drawable/nadmo_icon"#' android/app/src/main/AndroidManifest.xml
           sed -i 's#android:roundIcon="@mipmap/ic_launcher_round"#android:roundIcon="@drawable/nadmo_icon"#' android/app/src/main/AndroidManifest.xml
-          sed -i 's/versionCode 1/versionCode 11/' android/app/build.gradle
-          sed -i 's/versionName "1.0"/versionName "1.1.0"/' android/app/build.gradle
+          sed -i 's/versionCode 1/versionCode 17/' android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "1.4.0"/' android/app/build.gradle
 
       - name: Build test APK
         working-directory: android
@@ -57,14 +60,14 @@ jobs:
           ./gradlew --no-daemon assembleDebug
 
       - name: Checksum
-        run: sha256sum android/app/build/outputs/apk/debug/app-debug.apk > NADMO-AI-v1.1.0-test.sha256
+        run: sha256sum android/app/build/outputs/apk/debug/app-debug.apk > NADMO-AI-v1.4.0-test.sha256
 
       - name: Upload test APK
         uses: actions/upload-artifact@v7
         with:
-          name: NADMO-AI-v1.1.0-test
+          name: NADMO-AI-v1.4.0-test
           path: |
             android/app/build/outputs/apk/debug/app-debug.apk
-            NADMO-AI-v1.1.0-test.sha256
+            NADMO-AI-v1.4.0-test.sha256
           if-no-files-found: error
           retention-days: 30
